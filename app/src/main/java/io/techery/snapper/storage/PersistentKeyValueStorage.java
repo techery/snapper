@@ -1,10 +1,5 @@
 package io.techery.snapper.storage;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -47,25 +42,13 @@ public class PersistentKeyValueStorage<T> implements KeyValueStorage<T>, Closeab
 
     @Override
     public void put(final ItemRef<T> itemRef) {
-        final ByteArrayOutputStream stream = new ByteArrayOutputStream();
-
-        final Output output = new Output(stream);
-        try {
-            this.kryo.writeObject(output, itemRef.getValue());
-            output.close();
-
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    db.put(itemRef.getKey().array(), objectConverter.toBytes(itemRef.getValue()));
-                }
-            });
-
-            this.itemsCache.add(itemRef);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                db.put(itemRef.getKey().array(), objectConverter.toBytes(itemRef.getValue()));
+                itemsCache.add(itemRef);
+            }
+        });
     }
 
     @Override
@@ -88,16 +71,7 @@ public class PersistentKeyValueStorage<T> implements KeyValueStorage<T>, Closeab
         this.db.enumerate(new DatabaseAdapter.EnumerationCallback() {
             @Override
             public void onRecord(byte[] key, byte[] value) {
-                final Input input = new Input(value);
-                T parsedValue = null;
-                try {
-                    parsedValue = kryo.readObject(input, className);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                if (parsedValue != null) {
-                    itemsCache.add(new ItemRef<>(ByteBuffer.wrap(key), objectConverter.fr));
-                }
+                itemsCache.add(new ItemRef<>(ByteBuffer.wrap(key), objectConverter.fromBytes(value)));
 
             }
         });
