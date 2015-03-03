@@ -1,5 +1,6 @@
 package io.techery.snapper.storage;
 
+import java.nio.ByteBuffer;
 import java.util.Set;
 
 import io.techery.snapper.model.ItemRef;
@@ -16,5 +17,13 @@ public interface KeyValueStorage<T> {
 
     void remove(ItemRef<T> itemRef);
 
+    boolean exists(ItemRef<T> itemRef);
+
+    boolean exists(ByteBuffer key);
+
     Set<ItemRef<T>> items();
+
+    public void run(Runnable runnable);
+
+    void clear();
 }

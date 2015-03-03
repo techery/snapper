@@ -4,6 +4,7 @@ import com.innahema.collections.query.functions.Converter;
 import com.innahema.collections.query.functions.Predicate;
 import com.innahema.collections.query.queriables.Queryable;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -17,35 +18,55 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     protected final List<ItemRef<T>> items = new CopyOnWriteArrayList<>();
     private Predicate<T> predicate;
     private Comparator<T> comparator;
+    private final WeakReference<IDataSet<T>> dataSetWeakReference;
 
     private List<ItemRef<T>> build(IDataSet<T> dataSet) {
 
         Queryable<ItemRef<T>> queryable = Queryable.from(dataSet);
 
-        Queryable<ItemRef<T>> where = queryable.where(new Predicate<ItemRef<T>>() {
+        queryable = queryable.where(new Predicate<ItemRef<T>>() {
             @Override
             public boolean apply(ItemRef<T> element) {
                 return DataView.this.predicate.apply(element.getValue());
             }
         });
 
-        Queryable<ItemRef<T>> sort = where.sort(new Comparator<ItemRef<T>>() {
+        if (this.comparator != null) {
+            queryable = queryable.sort(getComparator());
+        }
+
+        return queryable.toList();
+    }
+
+    private Comparator<ItemRef<T>> getComparator() {
+        return new Comparator<ItemRef<T>>() {
             @Override
             public int compare(ItemRef<T> o1, ItemRef<T> o2) {
                 return DataView.this.comparator.compare(o1.getValue(), o2.getValue());
             }
-        });
-
-        return sort.toList();
+        };
     }
 
-    public DataView(IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
+    public DataView(final IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
         this.comparator = comparator;
         this.predicate = predicate;
+        this.dataSetWeakReference = new WeakReference<>(dataSet);
 
-        this.items.addAll(build(dataSet));
+        dataSet.run(new Runnable() {
+            @Override
+            public void run() {
+                items.addAll(build(dataSet));
 
-        dataSet.addListener(this);
+                DataSetChange<T> change = new DataSetChange<>(items, new ArrayList<ItemRef<T>>(), new ArrayList<ItemRef<T>>());
+
+                didUpdateDataSet(change);
+
+                IDataSet<T> parentDataSet = DataView.this.dataSetWeakReference.get();
+                if (parentDataSet != null) {
+                    parentDataSet.addListener(DataView.this);
+                }
+            }
+        });
     }
 
     public Builder<T> view() {
@@ -73,12 +94,8 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     }
 
     private int indexForNewItem(ItemRef<T> item) {
-        final int index = Collections.binarySearch(this.items, item, new Comparator<ItemRef<T>>() {
-            @Override
-            public int compare(ItemRef<T> o1, ItemRef<T> o2) {
-                return DataView.this.comparator.compare(o1.getValue(), o2.getValue());
-            }
-        });
+        final int index = Collections.binarySearch(this.items, item, getComparator());
+
         if (index >= 0) {
             return index;
         } else {
@@ -97,11 +114,11 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         final List<ItemRef<T>> removedItems = processRemovedItems(change.getRemoved());
         final List<ItemRef<T>> updatedItems = processUpdatedItems(change.getUpdated(), removedItems);
 
-        return new DataSetChange<T>(addedItems, updatedItems, removedItems);
+        return new DataSetChange<>(addedItems, updatedItems, removedItems);
     }
 
     private List<ItemRef<T>> processRemovedItems(List<ItemRef<T>> removed) {
-        final List<ItemRef<T>> removedItems = new ArrayList<ItemRef<T>>();
+        final List<ItemRef<T>> removedItems = new ArrayList<>();
 
         for (ItemRef<T> item : removed) {
             if (this.items.contains(item)) {
@@ -114,7 +131,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     }
 
     private List<ItemRef<T>> processUpdatedItems(List<ItemRef<T>> updated, List<ItemRef<T>> localRemovedItems) {
-        final List<ItemRef<T>> updatedItems = new ArrayList<ItemRef<T>>();
+        final List<ItemRef<T>> updatedItems = new ArrayList<>();
 
         for (ItemRef<T> item : updated) {
             if (this.items.contains(item)) {
@@ -134,7 +151,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     }
 
     private List<ItemRef<T>> processAddedItems(List<ItemRef<T>> added) {
-        final List<ItemRef<T>> addedItems = new ArrayList<ItemRef<T>>();
+        final List<ItemRef<T>> addedItems = new ArrayList<>();
 
         for (ItemRef<T> item : added) {
             if (this.predicate.apply(item.getValue())) {
@@ -150,5 +167,13 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     @Override
     public Iterator<ItemRef<T>> iterator() {
         return items.iterator();
+    }
+
+    @Override
+    public void run(Runnable runnable) {
+        IDataSet<T> dataSet = this.dataSetWeakReference.get();
+        if (dataSet != null) {
+            dataSet.run(runnable);
+        }
     }
 }

@@ -1,4 +1,4 @@
-package techery.io.snappytest;
+package io.techery.snapper.listadapter;
 
 import android.content.Context;
 import android.os.Handler;
@@ -31,13 +31,11 @@ public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.
 
         this.dataView = dataView;
         this.dataView.addListener(this);
-
         syncWithDataView();
     }
 
     @Override
     public void onDataSetUpdated(final IDataSet<T> dataSet, DataSetChange<T> change) {
-
         Handler mainHandler = new Handler(Looper.getMainLooper());
 
         mainHandler.post(new Runnable() {

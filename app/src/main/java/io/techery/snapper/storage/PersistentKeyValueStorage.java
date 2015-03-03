@@ -37,7 +37,7 @@ public class PersistentKeyValueStorage<T> implements KeyValueStorage<T>, Closeab
 
     @Override
     public void setListener(Listener listener) {
-        
+
     }
 
     @Override
@@ -63,8 +63,23 @@ public class PersistentKeyValueStorage<T> implements KeyValueStorage<T>, Closeab
     }
 
     @Override
+    public boolean exists(ItemRef<T> itemRef) {
+        return exists(itemRef.getKey());
+    }
+
+    @Override
+    public boolean exists(ByteBuffer key) {
+        return this.itemsCache.contains(new ItemRef<T>(key, null));
+    }
+
+    @Override
     public Set<ItemRef<T>> items() {
         return this.itemsCache;
+    }
+
+    @Override
+    public void run(Runnable runnable) {
+        this.executor.execute(runnable);
     }
 
     public void loadFromDisk() {
@@ -72,11 +87,11 @@ public class PersistentKeyValueStorage<T> implements KeyValueStorage<T>, Closeab
             @Override
             public void onRecord(byte[] key, byte[] value) {
                 itemsCache.add(new ItemRef<>(ByteBuffer.wrap(key), objectConverter.fromBytes(value)));
-
             }
         });
     }
 
+    @Override
     public void clear() {
         this.executor.execute(new Runnable() {
             @Override
@@ -92,7 +107,6 @@ public class PersistentKeyValueStorage<T> implements KeyValueStorage<T>, Closeab
                 itemsCache.clear();
             }
         });
-
     }
 
     @Override

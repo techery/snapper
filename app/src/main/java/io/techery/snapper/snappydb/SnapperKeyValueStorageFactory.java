@@ -1,4 +1,4 @@
-package techery.io.snappytest;
+package io.techery.snapper.snappydb;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;

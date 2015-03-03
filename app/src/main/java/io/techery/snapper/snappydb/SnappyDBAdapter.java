@@ -1,4 +1,4 @@
-package techery.io.snappytest;
+package io.techery.snapper.snappydb;
 
 import com.snappydb.DB;
 import com.snappydb.KeyIterator;
@@ -12,24 +12,22 @@ import io.techery.snapper.storage.DatabaseAdapter;
 public class SnappyDBAdapter implements DatabaseAdapter {
 
     private final DB snappyDB;
+    private final String prefix;
 
-    public SnappyDBAdapter(DB db) {
+    public SnappyDBAdapter(DB db, String prefix) {
         this.snappyDB = db;
+        this.prefix = prefix;
     }
 
     @Override
     public void close() throws IOException {
-        try {
-            snappyDB.close();
-        } catch (SnappydbException e) {
-            throw new IOException(e.getLocalizedMessage());
-        }
+        throw new IllegalStateException("SnappyDB should be closed by db factory.");
     }
 
     @Override
     public void put(byte[] bytes, byte[] bytes2) {
         try {
-            snappyDB.put(new String(bytes, "UTF-8"), bytes2);
+            snappyDB.put(getFullKey(bytes), bytes2);
         } catch (SnappydbException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
@@ -37,10 +35,15 @@ public class SnappyDBAdapter implements DatabaseAdapter {
         }
     }
 
+    private String getFullKey(byte[] bytes) throws UnsupportedEncodingException {
+        final String key = new String(bytes, "UTF-8");
+        return prefix + ":" + key;
+    }
+
     @Override
     public void delete(byte[] bytes) {
         try {
-            snappyDB.del(new String(bytes, "UTF-8"));
+            snappyDB.del(getFullKey(bytes));
         } catch (SnappydbException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
@@ -52,7 +55,7 @@ public class SnappyDBAdapter implements DatabaseAdapter {
     public void enumerate(EnumerationCallback enumerationCallback) {
         KeyIterator keyIterator = null;
         try {
-            keyIterator = snappyDB.allKeysIterator();
+            keyIterator = snappyDB.findKeysIterator(this.prefix);
             for (String[] batch : keyIterator.byBatch(100)) {
                 for (String key : batch) {
                     byte[] value = snappyDB.getBytes(key);

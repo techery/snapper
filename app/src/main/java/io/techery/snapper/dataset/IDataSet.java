@@ -11,4 +11,6 @@ public interface IDataSet<T> extends Iterable<ItemRef<T>> {
     public void addListener(Listener<T> listener);
 
     public void removeListener(Listener<T> listener);
+
+    public void run(Runnable runnable);
 }

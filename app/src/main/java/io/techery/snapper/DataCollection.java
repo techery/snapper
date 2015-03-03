@@ -4,6 +4,7 @@ package io.techery.snapper;
 import com.innahema.collections.query.queriables.Queryable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -30,26 +31,47 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements K
 
     public void insert(final T item) {
         final ItemRef<T> itemRef = ItemRef.make(item);
+        boolean isUpdate = this.keyValueStorage.exists(itemRef);
         this.keyValueStorage.put(itemRef);
-        List<ItemRef<T>> list = new ArrayList<>();
-        list.add(itemRef);
-        didUpdateDataSet(DataSetChange.buildWithAdded(list));
+
+        if (isUpdate) {
+            didUpdateDataSet(DataSetChange.buildWithUpdated(Arrays.asList(itemRef)));
+        } else {
+            didUpdateDataSet(DataSetChange.buildWithAdded(Arrays.asList(itemRef)));
+        }
+    }
+
+    public void insertAll(final List<T> items) {
+        List<ItemRef<T>> updated = new ArrayList<>();
+        List<ItemRef<T>> inserted = new ArrayList<>();
+
+        for (T item : items) {
+            final ItemRef<T> itemRef = ItemRef.make(item);
+            boolean isUpdate = this.keyValueStorage.exists(itemRef);
+            this.keyValueStorage.put(itemRef);
+
+            if (isUpdate) {
+                updated.add(itemRef);
+            } else {
+                inserted.add(itemRef);
+            }
+        }
+
+        didUpdateDataSet(new DataSetChange<>(inserted, updated, new ArrayList<ItemRef<T>>()));
     }
 
     public void remove(final T item) {
         final ItemRef<T> itemRef = ItemRef.make(item);
         this.keyValueStorage.remove(itemRef);
-        List<ItemRef<T>> list = new ArrayList<>();
-        list.add(itemRef);
-        didUpdateDataSet(DataSetChange.buildWithAdded(list));
+        didUpdateDataSet(DataSetChange.buildWithRemoved(Arrays.asList(itemRef)));
     }
 
-    public void update(final T item) {
-        final ItemRef<T> itemRef = ItemRef.make(item);
-        this.keyValueStorage.put(itemRef);
-        List<ItemRef<T>> list = new ArrayList<>();
-        list.add(itemRef);
-        didUpdateDataSet(DataSetChange.buildWithAdded(list));
+    public void clear() {
+        List<ItemRef<T>> deletedItems = Queryable.from(this).toList();
+
+        this.keyValueStorage.clear();
+
+        didUpdateDataSet(DataSetChange.buildWithRemoved(deletedItems));
     }
 
     @Override
@@ -60,5 +82,10 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements K
     @Override
     public void onStorageLoaded() {
         didUpdateDataSet(DataSetChange.buildWithAdded(Queryable.from(this.keyValueStorage.items()).toList()));
+    }
+
+    @Override
+    public void run(Runnable runnable) {
+        this.keyValueStorage.run(runnable);
     }
 }

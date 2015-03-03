@@ -32,4 +32,9 @@ public class ItemRef<T> {
 
         return getKey().compareTo(((ItemRef<T>) obj).getKey()) == 0;
     }
+
+    @Override
+    public int hashCode() {
+        return this.key.hashCode();
+    }
 }

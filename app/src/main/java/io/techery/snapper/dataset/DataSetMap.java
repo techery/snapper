@@ -34,7 +34,7 @@ public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.Listener<F> {
             @Override
             public ItemRef<T> next() {
                 final ItemRef<F> itemRef = iterator.next();
-                return new ItemRef<T>(itemRef.getKey(), mapFunction.apply(itemRef.getValue()));
+                return new ItemRef<>(itemRef.getKey(), mapFunction.apply(itemRef.getValue()));
             }
 
             @Override
@@ -52,6 +52,11 @@ public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.Listener<F> {
     @Override
     public void removeListener(Listener<T> listener) {
         this.listeners.remove(listener);
+    }
+
+    @Override
+    public void run(Runnable runnable) {
+        this.originalDataSet.run(runnable);
     }
 
     @Override

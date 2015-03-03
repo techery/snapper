@@ -1,4 +1,4 @@
-package techery.io.snappytest;
+package io.techery.snapper.snappydb;
 
 import android.content.Context;
 
@@ -13,6 +13,7 @@ import io.techery.snapper.storage.DatabaseFactory;
 
 public class SnappyDBFactory implements DatabaseFactory {
     private final Context context;
+    private DB db;
 
     public SnappyDBFactory(Context context) {
         this.context = context;
@@ -20,13 +21,13 @@ public class SnappyDBFactory implements DatabaseFactory {
 
     @Override
     public DatabaseAdapter createDatabase(String name) throws IOException {
-        DB db;
-        try {
-            db = DBFactory.open(context, name);
-        } catch (SnappydbException e) {
-            throw new IOException(e.getLocalizedMessage());
+        if (db == null) {
+            try {
+                db = DBFactory.open(context);
+            } catch (SnappydbException e) {
+                throw new IOException(e.getLocalizedMessage());
+            }
         }
-
-        return new SnappyDBAdapter(db);
+        return new SnappyDBAdapter(db, name);
     }
 }
