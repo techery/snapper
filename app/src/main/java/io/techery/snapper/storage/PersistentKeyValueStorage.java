@@ -17,27 +17,27 @@ public class PersistentKeyValueStorage<T> implements KeyValueStorage<T>, Closeab
     private final Set<ItemRef<T>> itemsCache = new HashSet<>();
     private final Executor executor;
 
-    public PersistentKeyValueStorage(ObjectConverter<T> objectConverter, DatabaseFactory databaseFactory, Executor executor) {
+    public PersistentKeyValueStorage(ObjectConverter<T> objectConverter, DatabaseAdapter db, Executor executor) {
         this.objectConverter = objectConverter;
+        this.db = db;
         this.executor = executor;
-
-        try {
-            this.db = databaseFactory.createDatabase(getClass().getName());
-            this.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    loadFromDisk();
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                loadFromDisk();
+            }
+        });
     }
 
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
         close();
+    }
+
+    @Override
+    public void setListener(Listener listener) {
+        
     }
 
     @Override
@@ -103,7 +103,7 @@ public class PersistentKeyValueStorage<T> implements KeyValueStorage<T>, Closeab
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
-                this.db = null;
+
             }
         }
     }
