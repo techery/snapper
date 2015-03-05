@@ -1,5 +1,7 @@
 package io.techery.snapper.view;
 
+import android.util.Log;
+
 import com.innahema.collections.query.functions.Converter;
 import com.innahema.collections.query.functions.Predicate;
 import com.innahema.collections.query.queriables.Queryable;
@@ -9,7 +11,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.techery.snapper.dataset.DataSet;
-import io.techery.snapper.dataset.DataSetChange;
+import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.model.ItemRef;
 
@@ -22,6 +24,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
     private List<ItemRef<T>> build(IDataSet<T> dataSet) {
 
+
         Queryable<ItemRef<T>> queryable = Queryable.from(dataSet);
 
         queryable = queryable.where(new Predicate<ItemRef<T>>() {
@@ -32,13 +35,13 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         });
 
         if (this.comparator != null) {
-            queryable = queryable.sort(getComparator());
+            queryable = queryable.sort(getItemComparator());
         }
 
         return queryable.toList();
     }
 
-    private Comparator<ItemRef<T>> getComparator() {
+    private Comparator<ItemRef<T>> getItemComparator() {
         return new Comparator<ItemRef<T>>() {
             @Override
             public int compare(ItemRef<T> o1, ItemRef<T> o2) {
@@ -52,12 +55,12 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         this.predicate = predicate;
         this.dataSetWeakReference = new WeakReference<>(dataSet);
 
-        dataSet.run(new Runnable() {
+        dataSet.perform(new Runnable() {
             @Override
             public void run() {
                 items.addAll(build(dataSet));
 
-                DataSetChange<T> change = new DataSetChange<>(items, new ArrayList<ItemRef<T>>(), new ArrayList<ItemRef<T>>());
+                StorageChange<T> change = new StorageChange<>(items, new ArrayList<ItemRef<T>>(), new ArrayList<ItemRef<T>>());
 
                 didUpdateDataSet(change);
 
@@ -94,7 +97,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     }
 
     private int indexForNewItem(ItemRef<T> item) {
-        final int index = Collections.binarySearch(this.items, item, getComparator());
+        final int index = Collections.binarySearch(this.items, item, getItemComparator());
 
         if (index >= 0) {
             return index;
@@ -104,17 +107,17 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     }
 
     @Override
-    public void onDataSetUpdated(IDataSet<T> dataSet, DataSetChange<T> change) {
+    public void onDataSetUpdated(IDataSet<T> dataSet, StorageChange<T> change) {
         didUpdateDataSet(processChange(change));
     }
 
-    private DataSetChange<T> processChange(DataSetChange<T> change) {
+    private StorageChange<T> processChange(StorageChange<T> change) {
 
         final List<ItemRef<T>> addedItems = processAddedItems(change.getAdded());
         final List<ItemRef<T>> removedItems = processRemovedItems(change.getRemoved());
         final List<ItemRef<T>> updatedItems = processUpdatedItems(change.getUpdated(), removedItems);
 
-        return new DataSetChange<>(addedItems, updatedItems, removedItems);
+        return new StorageChange<>(addedItems, updatedItems, removedItems);
     }
 
     private List<ItemRef<T>> processRemovedItems(List<ItemRef<T>> removed) {
@@ -126,6 +129,8 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
                 removedItems.add(item);
             }
         }
+
+        Log.d("DataView", "DataView Removed:" + removedItems.size() + "; Items:" + this.items.size());
 
         return removedItems;
     }
@@ -147,6 +152,8 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
             }
         }
 
+        Log.d("DataView", "DataView Updated:" + updatedItems.size() + "; Items:" + this.items.size());
+
         return updatedItems;
     }
 
@@ -161,6 +168,8 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
             }
         }
 
+        Log.d("DataView", "DataView Added:" + addedItems.size() + "; Items:" + this.items.size());
+
         return addedItems;
     }
 
@@ -170,10 +179,10 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     }
 
     @Override
-    public void run(Runnable runnable) {
+    public void perform(Runnable runnable) {
         IDataSet<T> dataSet = this.dataSetWeakReference.get();
         if (dataSet != null) {
-            dataSet.run(runnable);
+            dataSet.perform(runnable);
         }
     }
 }

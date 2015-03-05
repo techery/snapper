@@ -1,11 +1,14 @@
 package io.techery.snapper.snappydb;
 
+import android.util.Log;
+
 import com.snappydb.DB;
 import com.snappydb.KeyIterator;
 import com.snappydb.SnappydbException;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidParameterException;
 
 import io.techery.snapper.storage.DatabaseAdapter;
 
@@ -16,7 +19,7 @@ public class SnappyDBAdapter implements DatabaseAdapter {
 
     public SnappyDBAdapter(DB db, String prefix) {
         this.snappyDB = db;
-        this.prefix = prefix;
+        this.prefix = prefix + ":";
     }
 
     @Override
@@ -25,28 +28,39 @@ public class SnappyDBAdapter implements DatabaseAdapter {
     }
 
     @Override
-    public void put(byte[] bytes, byte[] bytes2) {
+    public void put(byte[] key, byte[] value) {
         try {
-            snappyDB.put(getFullKey(bytes), bytes2);
-        } catch (SnappydbException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
+            snappyDB.put(getFullKey(key), value);
+        } catch (SnappydbException | UnsupportedEncodingException e) {
             e.printStackTrace();
         }
     }
 
     private String getFullKey(byte[] bytes) throws UnsupportedEncodingException {
         final String key = new String(bytes, "UTF-8");
-        return prefix + ":" + key;
+        return prefix + key;
+    }
+
+    private byte[] getOriginalKey(String key) {
+        final int keyLength = key.length() - prefix.length();
+        byte originalKey[] = new byte[keyLength];
+
+        for (int i = 0; i < keyLength; i++) {
+            originalKey[i] = key.getBytes()[prefix.length() + i];
+        }
+
+        if (originalKey.length != 4) {
+            throw new InvalidParameterException("Invalid key:" + key);
+        }
+
+        return originalKey;
     }
 
     @Override
     public void delete(byte[] bytes) {
         try {
             snappyDB.del(getFullKey(bytes));
-        } catch (SnappydbException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
+        } catch (SnappydbException | UnsupportedEncodingException e) {
             e.printStackTrace();
         }
     }
@@ -56,10 +70,13 @@ public class SnappyDBAdapter implements DatabaseAdapter {
         KeyIterator keyIterator = null;
         try {
             keyIterator = snappyDB.findKeysIterator(this.prefix);
-            for (String[] batch : keyIterator.byBatch(100)) {
+            for (String[] batch : keyIterator.byBatch(1000)) {
+
+                Log.d("LevelDB", "Load Batch:" + batch.length);
+
                 for (String key : batch) {
                     byte[] value = snappyDB.getBytes(key);
-                    enumerationCallback.onRecord(key.getBytes(), value);
+                    enumerationCallback.onRecord(getOriginalKey(key), value);
                 }
             }
         } catch (SnappydbException e) {

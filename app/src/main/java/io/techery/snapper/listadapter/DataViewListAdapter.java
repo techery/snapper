@@ -3,9 +3,10 @@ package io.techery.snapper.listadapter;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 
-import io.techery.snapper.dataset.DataSetChange;
+import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.view.IDataView;
 
@@ -15,9 +16,7 @@ public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.
 
     public DataViewListAdapter(Context context, int resource, IDataView<T> dataView) {
         super(context, resource);
-        this.dataView = dataView;
-        this.dataView.addListener(this);
-        syncWithDataView();
+        setDataView(dataView);
     }
 
     public IDataView<T> getDataView() {
@@ -31,11 +30,10 @@ public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.
 
         this.dataView = dataView;
         this.dataView.addListener(this);
-        syncWithDataView();
     }
 
     @Override
-    public void onDataSetUpdated(final IDataSet<T> dataSet, DataSetChange<T> change) {
+    public void onDataSetUpdated(final IDataSet<T> dataSet, StorageChange<T> change) {
         Handler mainHandler = new Handler(Looper.getMainLooper());
 
         mainHandler.post(new Runnable() {
@@ -50,6 +48,7 @@ public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.
     private void syncWithDataView() {
         clear();
         if (dataView != null) {
+            Log.d("Adapter", "Add:" + dataView.size());
             addAll(dataView.toList());
         }
     }

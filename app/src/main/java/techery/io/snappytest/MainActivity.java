@@ -6,16 +6,13 @@ import android.view.View;
 import android.widget.ListView;
 
 import com.innahema.collections.query.functions.Predicate;
+import com.snappydb.SnappydbException;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
 import io.techery.snapper.DataCollection;
 import io.techery.snapper.DroidSnapper;
-import io.techery.snapper.Snapper;
 import io.techery.snapper.listadapter.DataViewListAdapter;
 import io.techery.snapper.model.Indexable;
 import io.techery.snapper.view.IDataView;
@@ -29,8 +26,6 @@ public class MainActivity extends ActionBarActivity {
         public float price;
         public String email;
         public boolean isActive;
-        public String demo;
-        public int x;
 
         public User(int id) {
             this.id = id;
@@ -64,8 +59,8 @@ public class MainActivity extends ActionBarActivity {
         return u;
     }
 
+    int lastId = 400;
     IDataView<User> sortedView;
-
     DataViewListAdapter<User> itemsAdapter;
 
     @Override
@@ -73,64 +68,50 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Snapper snapper = DroidSnapper.get(this);
+        final DataCollection<User> dataCollection = DroidSnapper.get(this).collection(User.class);
 
-        DataCollection<User> dataCollection = null;
+//        int idx = 300;
+//        dataCollection.insert(genUser(idx++));
+//        dataCollection.insert(genUser(idx++));
+//        dataCollection.insert(genUser(idx++));
+//        dataCollection.insert(genUser(idx++));
+//        dataCollection.insert(genUser(idx++));
+//        dataCollection.insert(genUser(idx++));
+//        dataCollection.insert(genUser(idx++));
+//        dataCollection.insert(genUser(idx++));
+//        dataCollection.insert(genUser(idx++));
+//        dataCollection.insert(genUser(idx++));
 
-        try {
-            dataCollection = snapper.collection(User.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        dataCollection.clear();
 
-        final DataCollection<User> finalDataCollection = dataCollection;
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                List<User> users = new ArrayList<>();
-                for (int i = 0; i < 100; i++) {
-                    users.add(genUser(i));
+//                List<User> users = new ArrayList<>();
+                for (int i = 0; i < 120; i++) {
+                    dataCollection.insert(genUser(i));
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        break;
+                    }
                 }
 
-                finalDataCollection.insertAll(users);
+//                dataCollection.insertAll(users);
             }
         });
-        thread.start();
+//        thread.start();
 
-        findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
 
-                if (itemsAdapter.getDataView().equals(sortedView)) {
-
-                    IDataView<User> view = sortedView.view().where(new Predicate<User>() {
-                        @Override
-                        public boolean apply(User element) {
-                            return element.id < 15;
-                        }
-                    }).build();
-
-                    itemsAdapter.setDataView(view);
-                } else {
-                    itemsAdapter.setDataView(sortedView);
-                }
-            }
-        });
-
-        findViewById(R.id.loadButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finalDataCollection.clear();
-            }
-        });
 
         sortedView = dataCollection.view().sort(new Comparator<User>() {
             @Override
             public int compare(User o1, User o2) {
                 if (o1.id < o2.id) {
-                    return -1;
-                } else if (o1.id > o2.id) {
                     return 1;
+                } else if (o1.id > o2.id) {
+                    return -1;
                 } else {
                     return 0;
                 }
@@ -143,6 +124,41 @@ public class MainActivity extends ActionBarActivity {
 
         listView.setAdapter(itemsAdapter);
 
+        findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
+                if (itemsAdapter.getDataView().equals(sortedView)) {
+
+                    itemsAdapter.setDataView(sortedView.view().where(new Predicate<User>() {
+                        @Override
+                        public boolean apply(User element) {
+                            return element.id % 10 == 0;
+                        }
+                    }).build());
+
+                } else {
+                    itemsAdapter.setDataView(sortedView);
+                }
+            }
+        });
+
+        findViewById(R.id.loadButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dataCollection.insert(genUser(lastId++));
+            }
+        });
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        try {
+            DroidSnapper.dbFactory.close();
+        } catch (SnappydbException e) {
+            e.printStackTrace();
+        }
     }
 }

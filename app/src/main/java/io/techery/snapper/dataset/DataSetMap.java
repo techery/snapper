@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import io.techery.snapper.model.ItemRef;
+import io.techery.snapper.storage.StorageChange;
 
 public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.Listener<F> {
 
@@ -55,19 +56,19 @@ public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.Listener<F> {
     }
 
     @Override
-    public void run(Runnable runnable) {
-        this.originalDataSet.run(runnable);
+    public void perform(Runnable runnable) {
+        this.originalDataSet.perform(runnable);
     }
 
     @Override
-    public void onDataSetUpdated(IDataSet<F> dataSet, DataSetChange<F> change) {
-        final DataSetChange<T> mappedChange = mapChange(change);
+    public void onDataSetUpdated(IDataSet<F> dataSet, StorageChange<F> change) {
+        final StorageChange<T> mappedChange = mapChange(change);
         for (Listener<T> listener : listeners) {
             listener.onDataSetUpdated(this, mappedChange);
         }
     }
 
-    private DataSetChange<T> mapChange(DataSetChange<F> change) {
+    private StorageChange<T> mapChange(StorageChange<F> change) {
 
         final Converter<ItemRef<F>, ItemRef<T>> converter = new Converter<ItemRef<F>, ItemRef<T>>() {
             @Override
@@ -80,6 +81,6 @@ public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.Listener<F> {
         final List<ItemRef<T>> removed = Queryable.from(change.getRemoved()).map(converter).toList();
         final List<ItemRef<T>> updated = Queryable.from(change.getUpdated()).map(converter).toList();
 
-        return new DataSetChange<T>(added, updated, removed);
+        return new StorageChange<T>(added, updated, removed);
     }
 }

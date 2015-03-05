@@ -1,91 +1,74 @@
 package io.techery.snapper;
 
 
-import com.innahema.collections.query.queriables.Queryable;
+import com.innahema.collections.query.functions.Function1;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import io.techery.snapper.dataset.DataSet;
-import io.techery.snapper.dataset.DataSetChange;
 import io.techery.snapper.model.Indexable;
 import io.techery.snapper.model.ItemRef;
-import io.techery.snapper.storage.KeyValueStorage;
+import io.techery.snapper.storage.Storage;
+import io.techery.snapper.storage.StorageChange;
+import io.techery.snapper.util.ListUtils;
 import io.techery.snapper.view.DataViewBuilder;
 import io.techery.snapper.view.IDataView;
 
-public class DataCollection<T extends Indexable> extends DataSet<T> implements KeyValueStorage.Listener {
+public class DataCollection<T extends Indexable> extends DataSet<T> implements Storage.UpdateCallback<T> {
 
-    public DataCollection(KeyValueStorage<T> keyValueStorage) {
-        this.keyValueStorage = keyValueStorage;
-        this.keyValueStorage.setListener(this);
+    private final Executor executor = Executors.newSingleThreadExecutor();
+    private final Storage<T> storage;
+
+    public DataCollection(Storage<T> storage) {
+        this.storage = storage;
+        this.storage.load(this);
     }
 
     public IDataView.Builder<T> view() {
         return new DataViewBuilder<>(this);
     }
 
-    private final KeyValueStorage<T> keyValueStorage;
-
     public void insert(final T item) {
-        final ItemRef<T> itemRef = ItemRef.make(item);
-        boolean isUpdate = this.keyValueStorage.exists(itemRef);
-        this.keyValueStorage.put(itemRef);
-
-        if (isUpdate) {
-            didUpdateDataSet(DataSetChange.buildWithUpdated(Arrays.asList(itemRef)));
-        } else {
-            didUpdateDataSet(DataSetChange.buildWithAdded(Arrays.asList(itemRef)));
-        }
+        this.storage.put(ItemRef.make(item), this);
     }
 
     public void insertAll(final List<T> items) {
-        List<ItemRef<T>> updated = new ArrayList<>();
-        List<ItemRef<T>> inserted = new ArrayList<>();
-
-        for (T item : items) {
-            final ItemRef<T> itemRef = ItemRef.make(item);
-            boolean isUpdate = this.keyValueStorage.exists(itemRef);
-            this.keyValueStorage.put(itemRef);
-
-            if (isUpdate) {
-                updated.add(itemRef);
-            } else {
-                inserted.add(itemRef);
+        this.storage.putAll(ListUtils.map(items, new Function1<T, ItemRef<T>>() {
+            @Override
+            public ItemRef<T> apply(T t) {
+                return ItemRef.make(t);
             }
-        }
-
-        didUpdateDataSet(new DataSetChange<>(inserted, updated, new ArrayList<ItemRef<T>>()));
+        }), this);
     }
 
     public void remove(final T item) {
-        final ItemRef<T> itemRef = ItemRef.make(item);
-        this.keyValueStorage.remove(itemRef);
-        didUpdateDataSet(DataSetChange.buildWithRemoved(Arrays.asList(itemRef)));
+        this.storage.remove(ItemRef.make(item), this);
     }
 
     public void clear() {
-        List<ItemRef<T>> deletedItems = Queryable.from(this).toList();
-
-        this.keyValueStorage.clear();
-
-        didUpdateDataSet(DataSetChange.buildWithRemoved(deletedItems));
+        this.storage.clear(this);
     }
 
     @Override
     public Iterator<ItemRef<T>> iterator() {
-        return this.keyValueStorage.items().iterator();
+        return this.storage.items().iterator();
     }
 
     @Override
-    public void onStorageLoaded() {
-        didUpdateDataSet(DataSetChange.buildWithAdded(Queryable.from(this.keyValueStorage.items()).toList()));
+    public void perform(Runnable runnable) {
+        this.executor.execute(runnable);
     }
 
     @Override
-    public void run(Runnable runnable) {
-        this.keyValueStorage.run(runnable);
+    public void onStorageUpdate(final StorageChange<T> storageChange) {
+        this.executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                DataCollection.this.didUpdateDataSet(storageChange);
+            }
+        });
     }
 }

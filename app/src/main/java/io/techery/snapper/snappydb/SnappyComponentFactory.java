@@ -1,7 +1,5 @@
 package io.techery.snapper.snappydb;
 
-import android.content.Context;
-
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,9 +12,9 @@ public class SnappyComponentFactory extends ComponentFactory {
     private final SnappyDBFactory snappyDBFactory;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
+    public SnappyComponentFactory(SnappyDBFactory snappyDBFactory) {
 
-    public SnappyComponentFactory(Context context) {
-        this.snappyDBFactory = new SnappyDBFactory(context);
+        this.snappyDBFactory = snappyDBFactory;
     }
 
     @Override

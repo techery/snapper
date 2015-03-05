@@ -30,4 +30,8 @@ public class SnappyDBFactory implements DatabaseFactory {
         }
         return new SnappyDBAdapter(db, name);
     }
+
+    public void close() throws SnappydbException {
+        db.close();
+    }
 }
