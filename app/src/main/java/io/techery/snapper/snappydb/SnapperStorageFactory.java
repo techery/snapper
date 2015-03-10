@@ -7,9 +7,9 @@ import io.techery.snapper.ComponentFactory;
 import io.techery.snapper.converter.ObjectConverter;
 import io.techery.snapper.model.Indexable;
 import io.techery.snapper.storage.DatabaseAdapter;
+import io.techery.snapper.storage.PersistentStorage;
 import io.techery.snapper.storage.Storage;
 import io.techery.snapper.storage.StorageFactory;
-import io.techery.snapper.storage.PersistentStorage;
 
 public class SnapperStorageFactory implements StorageFactory {
     private final ComponentFactory componentFactory;

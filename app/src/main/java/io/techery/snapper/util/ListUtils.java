@@ -7,7 +7,7 @@ import com.innahema.collections.query.queriables.Queryable;
 import java.util.List;
 
 public class ListUtils {
-    public static <F, T> List<T> map(List<F> list, final Function1<F,T> mapper) {
+    public static <F, T> List<T> map(List<F> list, final Function1<F, T> mapper) {
         return Queryable.from(list).map(new Converter<F, T>() {
             @Override
             public T convert(F element) {

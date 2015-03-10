@@ -6,8 +6,8 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 
-import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.dataset.IDataSet;
+import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.view.IDataView;
 
 public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.Listener<T> {

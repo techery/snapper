@@ -7,13 +7,17 @@ import com.innahema.collections.query.functions.Predicate;
 import com.innahema.collections.query.queriables.Queryable;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.techery.snapper.dataset.DataSet;
-import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.model.ItemRef;
+import io.techery.snapper.storage.StorageChange;
 
 public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Listener<T> {
 
