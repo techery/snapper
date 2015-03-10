@@ -14,7 +14,7 @@ public class DroidSnapper extends Snapper {
 
     public static synchronized Snapper get(Context context) {
         if (sharedSnapper == null) {
-            dbFactory = new SnappyDBFactory(context);
+            dbFactory = new SnappyDBFactory(context.getApplicationContext());
 
             SnappyComponentFactory componentFactory = new SnappyComponentFactory(dbFactory);
 
