@@ -29,7 +29,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final DataCollection<User> dataCollection = DroidSnapper.get(this).collection(User.class);
+        final DataCollection<User> dataCollection = DroidSnapper.with(this).collection(User.class);
 
         // int idx = 300;
         // dataCollection.insert(genUser(idx++));

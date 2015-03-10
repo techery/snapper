@@ -74,7 +74,7 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
         };
 
         try {
-            dataCollection = DroidSnapper.get(getContext()).collection(User.class);
+            dataCollection = DroidSnapper.with(getContext()).collection(User.class);
         } catch (IOException e) {
             e.printStackTrace();
         }

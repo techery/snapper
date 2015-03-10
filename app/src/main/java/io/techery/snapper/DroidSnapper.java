@@ -9,24 +9,27 @@ import io.techery.snapper.storage.StorageFactory;
 
 public class DroidSnapper extends Snapper {
 
-    private static DroidSnapper sharedSnapper;
-    public static SnappyDBFactory dbFactory;
+    static volatile DroidSnapper sharedSnapper;
 
-    public static synchronized Snapper get(Context context) {
+    public static Snapper with(Context context) {
         if (sharedSnapper == null) {
-            dbFactory = new SnappyDBFactory(context.getApplicationContext());
-
-            SnappyComponentFactory componentFactory = new SnappyComponentFactory(dbFactory);
-
-            SnapperStorageFactory keyValueStorageFactory = new SnapperStorageFactory(componentFactory);
-
-            sharedSnapper = new DroidSnapper(keyValueStorageFactory);
+            synchronized (DroidSnapper.class) {
+                if (sharedSnapper == null) {
+                    sharedSnapper = createSnapper(context.getApplicationContext());
+                }
+            }
         }
-
         return sharedSnapper;
     }
 
-    private DroidSnapper(StorageFactory storageFactory) {
+    static DroidSnapper createSnapper(Context context) {
+        SnappyDBFactory dbFactory = new SnappyDBFactory(context);
+        SnappyComponentFactory componentFactory = new SnappyComponentFactory(dbFactory);
+        SnapperStorageFactory keyValueStorageFactory = new SnapperStorageFactory(componentFactory);
+        return new DroidSnapper(keyValueStorageFactory);
+    }
+
+    DroidSnapper(StorageFactory storageFactory) {
         super(storageFactory);
     }
 }
