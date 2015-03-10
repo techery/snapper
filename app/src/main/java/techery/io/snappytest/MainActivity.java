@@ -6,7 +6,6 @@ import android.view.View;
 import android.widget.ListView;
 
 import com.innahema.collections.query.functions.Predicate;
-import com.snappydb.SnappydbException;
 
 import java.nio.ByteBuffer;
 import java.util.Comparator;
@@ -105,15 +104,6 @@ public class MainActivity extends ActionBarActivity {
                 dataCollection.insert(genUser(lastId++));
             }
         });
-    }
-
-    @Override protected void onDestroy() {
-        super.onDestroy();
-        try {
-            DroidSnapper.dbFactory.close();
-        } catch (SnappydbException e) {
-            e.printStackTrace();
-        }
     }
 
     ///////////////////////////////////////////////////////////////////////////
