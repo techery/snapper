@@ -6,7 +6,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +36,7 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
 
     @Override
     public void put(final ItemRef<T> itemRef, final UpdateCallback<T> updateCallback) {
-        putAll(Arrays.asList(itemRef), updateCallback);
+        putAll(Collections.singletonList(itemRef), updateCallback);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
 
     @Override
     public void remove(final ItemRef<T> itemRef, final UpdateCallback<T> updateCallback) {
-        removeAll(Arrays.asList(itemRef), updateCallback);
+        removeAll(Collections.singletonList(itemRef), updateCallback);
     }
 
     @Override
