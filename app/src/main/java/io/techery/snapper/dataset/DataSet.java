@@ -1,13 +1,13 @@
 package io.techery.snapper.dataset;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.techery.snapper.storage.StorageChange;
 
 public abstract class DataSet<T> implements IDataSet<T> {
 
-    private final List<Listener<T>> listeners = new ArrayList<Listener<T>>();
+    private final List<Listener<T>> listeners = new CopyOnWriteArrayList<>();
 
     @Override
     public void addListener(final Listener<T> listener) {
