@@ -1,6 +1,6 @@
 package io.techery.snapper.storage;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.techery.snapper.model.ItemRef;
@@ -17,19 +17,22 @@ public class StorageChange<T> {
     }
 
     public static <T> StorageChange<T> buildWithRemoved(final List<ItemRef<T>> removed) {
-        return new StorageChange<>(new ArrayList<ItemRef<T>>(), new ArrayList<ItemRef<T>>(), removed);
+        return new StorageChange<>(Collections.<ItemRef<T>>emptyList(), Collections.<ItemRef<T>>emptyList(), removed);
     }
 
     public static <T> StorageChange<T> buildWithAdded(final List<ItemRef<T>> added) {
-        return new StorageChange<>(added, new ArrayList<ItemRef<T>>(), new ArrayList<ItemRef<T>>());
+        return new StorageChange<>(added, Collections.<ItemRef<T>>emptyList(), Collections.<ItemRef<T>>emptyList());
     }
 
     public static <T> StorageChange<T> buildWithUpdated(final List<ItemRef<T>> updated) {
-        return new StorageChange<>(new ArrayList<ItemRef<T>>(), updated, new ArrayList<ItemRef<T>>());
+        return new StorageChange<>(Collections.<ItemRef<T>>emptyList(), updated, Collections.<ItemRef<T>>emptyList());
     }
 
     public static <T> StorageChange<T> empty() {
-        return new StorageChange<>(new ArrayList<ItemRef<T>>(), new ArrayList<ItemRef<T>>(), new ArrayList<ItemRef<T>>());
+        return new StorageChange<>(
+                Collections.<ItemRef<T>>emptyList(),
+                Collections.<ItemRef<T>>emptyList(),
+                Collections.<ItemRef<T>>emptyList());
     }
 
     public List<ItemRef<T>> getAdded() {
