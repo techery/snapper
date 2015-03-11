@@ -6,7 +6,10 @@ import com.innahema.collections.query.functions.Function1;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.techery.snapper.dataset.DataSet;
 import io.techery.snapper.model.Indexable;
@@ -19,11 +22,17 @@ import io.techery.snapper.view.IDataView;
 
 public class DataCollection<T extends Indexable> extends DataSet<T> implements Storage.UpdateCallback<T> {
 
-    private final Executor executor = Executors.newSingleThreadExecutor();
     private final Storage<T> storage;
+    private final Executor executor;
+    private static final ExecutorService parentExecutor;
+
+    static {
+        parentExecutor = Executors.newFixedThreadPool(4);
+    }
 
     public DataCollection(Storage<T> storage) {
         this.storage = storage;
+        this.executor = new CollectionExecutor(parentExecutor);
         this.storage.load(this);
     }
 
@@ -32,11 +41,11 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements S
     }
 
     public void insert(final T item) {
-        this.storage.put(ItemRef.make(item), this);
+        storage.put(ItemRef.make(item), this);
     }
 
     public void insertAll(final List<T> items) {
-        this.storage.putAll(ListUtils.map(items, new Function1<T, ItemRef<T>>() {
+        storage.putAll(ListUtils.map(items, new Function1<T, ItemRef<T>>() {
             @Override
             public ItemRef<T> apply(T t) {
                 return ItemRef.make(t);
@@ -45,30 +54,72 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements S
     }
 
     public void remove(final T item) {
-        this.storage.remove(ItemRef.make(item), this);
+        storage.remove(ItemRef.make(item), this);
     }
 
     public void clear() {
-        this.storage.clear(this);
+        storage.clear(this);
     }
 
     @Override
     public Iterator<ItemRef<T>> iterator() {
-        return this.storage.items().iterator();
+        return storage.items().iterator();
     }
 
     @Override
     public void perform(Runnable runnable) {
-        this.executor.execute(runnable);
+        executor.execute(runnable);
     }
 
     @Override
     public void onStorageUpdate(final StorageChange<T> storageChange) {
-        this.executor.execute(new Runnable() {
-            @Override
-            public void run() {
+        executor.execute(new Runnable() {
+            @Override public void run() {
                 DataCollection.this.didUpdateDataSet(storageChange);
             }
         });
+    }
+
+    private static class CollectionExecutor implements Executor {
+
+        ExecutorService executor;
+        LinkedBlockingQueue<Runnable> queue;
+        volatile boolean canConsume = true;
+        ReentrantLock lock;
+
+        private CollectionExecutor(ExecutorService executor) {
+            this.executor = executor;
+            this.queue = new LinkedBlockingQueue();
+            lock = new ReentrantLock();
+        }
+
+        @Override public void execute(Runnable command) {
+            try {
+                queue.put(command);
+                lock.lock();
+                if (!canConsume) {
+                    lock.unlock();
+                    return;
+                }
+                canConsume = false;
+                lock.unlock();
+                executor.execute(new Runnable() {
+                    @Override public void run() {
+                        lock.lock();
+                        Runnable firstCommand = queue.poll();
+                        if (firstCommand != null) {
+                            lock.unlock();
+                            firstCommand.run();
+                            executor.execute(this);
+                        } else {
+                            canConsume = true;
+                            lock.unlock();
+                        }
+                    }
+                });
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
