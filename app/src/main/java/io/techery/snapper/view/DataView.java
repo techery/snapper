@@ -27,17 +27,13 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     private final WeakReference<IDataSet<T>> dataSetWeakReference;
 
     private List<ItemRef<T>> build(IDataSet<T> dataSet) {
-
-
         Queryable<ItemRef<T>> queryable = Queryable.from(dataSet);
-
         queryable = queryable.where(new Predicate<ItemRef<T>>() {
             @Override
             public boolean apply(ItemRef<T> element) {
                 return DataView.this.predicate.apply(element.getValue());
             }
         });
-
         if (this.comparator != null) {
             queryable = queryable.sort(getItemComparator());
         }

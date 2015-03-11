@@ -18,13 +18,13 @@ import io.techery.snapper.model.ItemRef;
 public class PersistentStorage<T> implements Storage<T>, Closeable {
 
     private final ObjectConverter<T> objectConverter;
-    private DatabaseAdapter db;
+    private final DatabaseAdapter db;
     private final Set<ItemRef<T>> itemsCache = new HashSet<>();
     private final Executor executor;
 
-    public PersistentStorage(ObjectConverter<T> objectConverter, DatabaseAdapter db, Executor executor) {
-        this.objectConverter = objectConverter;
+    public PersistentStorage(DatabaseAdapter db, ObjectConverter<T> objectConverter, Executor executor) {
         this.db = db;
+        this.objectConverter = objectConverter;
         this.executor = executor;
     }
 
@@ -103,7 +103,7 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
             public void onRecord(byte[] key, byte[] value) {
                 itemsCache.add(new ItemRef<>(ByteBuffer.wrap(key), objectConverter.fromBytes(value)));
 
-                final ArrayList<ItemRef<T>> added = new ArrayList<>();
+                ArrayList<ItemRef<T>> added = new ArrayList<>();
                 added.addAll(itemsCache);
 
                 updateCallback.onStorageUpdate(StorageChange.buildWithAdded(added));

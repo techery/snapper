@@ -5,7 +5,6 @@ import android.content.Context;
 import io.techery.snapper.snappydb.SnapperStorageFactory;
 import io.techery.snapper.snappydb.SnappyComponentFactory;
 import io.techery.snapper.snappydb.SnappyDBFactory;
-import io.techery.snapper.storage.StorageFactory;
 
 public class DroidSnapper extends Snapper {
 
@@ -29,7 +28,7 @@ public class DroidSnapper extends Snapper {
         return new DroidSnapper(keyValueStorageFactory);
     }
 
-    DroidSnapper(StorageFactory storageFactory) {
+    DroidSnapper(SnapperStorageFactory storageFactory) {
         super(storageFactory);
     }
 }

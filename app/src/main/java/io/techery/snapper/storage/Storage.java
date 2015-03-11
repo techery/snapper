@@ -17,7 +17,7 @@ public interface Storage<T> {
     void remove(ItemRef<T> itemRef, UpdateCallback<T> updateCallback);
     void removeAll(List<ItemRef<T>> items, UpdateCallback<T> updateCallback);
 
-    void load(final UpdateCallback<T> updateCallback);
+    void load(UpdateCallback<T> updateCallback);
 
     Set<ItemRef<T>> items();
 

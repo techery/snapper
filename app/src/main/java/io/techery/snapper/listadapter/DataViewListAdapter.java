@@ -13,10 +13,12 @@ import io.techery.snapper.view.IDataView;
 public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.Listener<T> {
 
     private IDataView<T> dataView;
+    private final Handler handler;
 
     public DataViewListAdapter(Context context, int resource, IDataView<T> dataView) {
         super(context, resource);
         setDataView(dataView);
+        handler = new Handler(Looper.getMainLooper());
     }
 
     public IDataView<T> getDataView() {
@@ -34,9 +36,7 @@ public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.
 
     @Override
     public void onDataSetUpdated(final IDataSet<T> dataSet, StorageChange<T> change) {
-        Handler mainHandler = new Handler(Looper.getMainLooper());
-
-        mainHandler.post(new Runnable() {
+        handler.post(new Runnable() {
             @Override
             public void run() {
                 syncWithDataView();
