@@ -22,10 +22,14 @@ public class SnappyDBFactory implements DatabaseFactory {
     @Override
     public DatabaseAdapter createDatabase(String name) throws IOException {
         if (db == null) {
-            try {
-                db = DBFactory.open(context);
-            } catch (SnappydbException e) {
-                throw new IOException(e.getLocalizedMessage());
+            synchronized (SnappyDBFactory.class) {
+                try {
+                    if (db == null || !db.isOpen()) {
+                        db = DBFactory.open(context);
+                    }
+                } catch (SnappydbException e) {
+                    throw new IOException(e.getLocalizedMessage());
+                }
             }
         }
         return new SnappyDBAdapter(db, name);
