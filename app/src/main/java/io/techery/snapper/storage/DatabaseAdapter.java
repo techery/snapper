@@ -1,13 +1,15 @@
 package io.techery.snapper.storage;
 
 import java.io.IOException;
+import java.util.List;
 
 public interface DatabaseAdapter {
 
     void close() throws IOException;
 
-    public interface EnumerationCallback {
-        public void onRecord(byte[] key, byte[] value);
+    public interface EnumerationCallback<T> {
+        public T onRecord(byte[] key, byte[] value);
+        public void onComplete(List<T> result);
     }
 
     void put(byte[] array, byte[] bytes);

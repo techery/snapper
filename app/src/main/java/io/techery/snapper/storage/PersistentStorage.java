@@ -44,28 +44,22 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-
                 List<ItemRef<T>> added = new ArrayList<>();
                 List<ItemRef<T>> updated = new ArrayList<>();
 
                 for (ItemRef<T> itemRef : items) {
                     db.put(itemRef.getKey().array(), objectConverter.toBytes(itemRef.getValue()));
-
                     boolean isUpdate = itemsCache.contains(itemRef);
-
                     itemsCache.add(itemRef);
-
                     if (isUpdate) {
                         updated.add(itemRef);
                     } else {
                         added.add(itemRef);
                     }
                 }
-
-                StorageChange<T> storageChange = new StorageChange<>(added, updated, new ArrayList<ItemRef<T>>());
-
-                Log.d("Storage", "Insert:" + added.size());
-
+                Log.i("Storage", "Insert:" + added.size());
+                Log.i("Storage", "Update:" + updated.size());
+                StorageChange<T> storageChange = new StorageChange<>(added, updated, Collections.<ItemRef<T>>emptyList());
                 updateCallback.onStorageUpdate(storageChange);
             }
         });
@@ -81,12 +75,10 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-
                 for (ItemRef<T> itemRef : items) {
                     db.delete(itemRef.getKey().array());
                     itemsCache.remove(itemRef);
                 }
-
                 updateCallback.onStorageUpdate(StorageChange.buildWithRemoved(items));
             }
         });
@@ -98,15 +90,22 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
     }
 
     public void load(final UpdateCallback<T> updateCallback) {
-        this.db.enumerate(new DatabaseAdapter.EnumerationCallback() {
-            @Override
-            public void onRecord(byte[] key, byte[] value) {
-                itemsCache.add(new ItemRef<>(ByteBuffer.wrap(key), objectConverter.fromBytes(value)));
+        executor.execute(new Runnable() {
+            @Override public void run() {
+                final ArrayList<ItemRef<T>> added = new ArrayList<>();
+                PersistentStorage.this.db.enumerate(new DatabaseAdapter.EnumerationCallback() {
+                    @Override
+                    public ItemRef<T> onRecord(byte[] key, byte[] value) {
+                        ItemRef<T> itemRef = new ItemRef<>(ByteBuffer.wrap(key), objectConverter.fromBytes(value));
+                        itemsCache.add(itemRef);
+                        added.addAll(itemsCache);
+                        return itemRef;
+                    }
 
-                ArrayList<ItemRef<T>> added = new ArrayList<>();
-                added.addAll(itemsCache);
-
-                updateCallback.onStorageUpdate(StorageChange.buildWithAdded(added));
+                    @Override public void onComplete(List result) {
+                        updateCallback.onStorageUpdate(StorageChange.buildWithAdded(result));
+                    }
+                });
             }
         });
     }
@@ -116,20 +115,20 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-
-                final ArrayList<ItemRef<T>> removed = new ArrayList<>();
-                removed.addAll(itemsCache);
-
                 db.enumerate(new DatabaseAdapter.EnumerationCallback() {
                     @Override
-                    public void onRecord(byte[] key, byte[] value) {
+                    public Void onRecord(byte[] key, byte[] value) {
                         db.delete(key);
+                        return null;
+                    }
+
+                    @Override public void onComplete(List result) {
+                        ArrayList<ItemRef<T>> removed = new ArrayList<>(itemsCache);
+                        itemsCache.clear();
+                        updateCallback.onStorageUpdate(StorageChange.buildWithRemoved(removed));
                     }
                 });
 
-                itemsCache.clear();
-
-                updateCallback.onStorageUpdate(StorageChange.buildWithRemoved(removed));
             }
         });
     }

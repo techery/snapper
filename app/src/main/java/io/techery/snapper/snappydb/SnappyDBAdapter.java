@@ -9,6 +9,7 @@ import com.snappydb.SnappydbException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 
 import io.techery.snapper.storage.DatabaseAdapter;
 
@@ -69,16 +70,17 @@ public class SnappyDBAdapter implements DatabaseAdapter {
     public void enumerate(EnumerationCallback enumerationCallback) {
         KeyIterator keyIterator = null;
         try {
+            ArrayList<Object> objects = new ArrayList<>();
             keyIterator = snappyDB.findKeysIterator(this.prefix);
             for (String[] batch : keyIterator.byBatch(1000)) {
-
-                Log.d("LevelDB", "Load Batch:" + batch.length);
-
+                Log.i("LevelDB", "Load Batch:" + batch.length);
                 for (String key : batch) {
                     byte[] value = snappyDB.getBytes(key);
-                    enumerationCallback.onRecord(getOriginalKey(key), value);
+                    Object o = enumerationCallback.onRecord(getOriginalKey(key), value);
+                    objects.add(o);
                 }
             }
+            enumerationCallback.onComplete(objects);
         } catch (SnappydbException e) {
             e.printStackTrace();
         } finally {
