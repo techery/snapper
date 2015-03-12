@@ -52,6 +52,8 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:id="@+id/listView"
+        android:fastScrollEnabled="true"
+        android:fastScrollAlwaysVisible="true"
         />
 
 </LinearLayout>

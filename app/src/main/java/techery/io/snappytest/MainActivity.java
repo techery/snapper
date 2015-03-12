@@ -2,19 +2,23 @@ package techery.io.snappytest;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.widget.ListView;
 
 import com.innahema.collections.query.functions.Predicate;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.techery.snapper.DataCollection;
 import io.techery.snapper.DroidSnapper;
+import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.listadapter.DataViewListAdapter;
 import io.techery.snapper.model.Indexable;
+import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.view.IDataView;
 
 
@@ -23,7 +27,9 @@ public class MainActivity extends ActionBarActivity {
     DataCollection<User> dataCollection;
     IDataView<User> sortedView;
     DataViewListAdapter<User> itemsAdapter;
-    int lastId;
+    volatile int lastId;
+
+    static final int BATCH_PUT_COUNT = 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,31 +39,35 @@ public class MainActivity extends ActionBarActivity {
 
         dataCollection = DroidSnapper.with(this).collection(User.class);
 
-//        sortedView = dataCollection.view().sort(new Comparator<User>() {
-//            @Override
-//            public int compare(User o1, User o2) {
-//                if (o1.id < o2.id) {
-//                    return 1;
-//                } else if (o1.id > o2.id) {
-//                    return -1;
-//                } else {
-//                    return 0;
-//                }
-//            }
-//        }).build();
+        sortedView = dataCollection.view().sort(new Comparator<User>() {
+            @Override
+            public int compare(User o1, User o2) {
+                if (o1.id < o2.id) {
+                    return 1;
+                } else if (o1.id > o2.id) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            }
+        }).build();
 
-//        sortedView.addListener(new IDataSet.Listener<User>() {
-//            @Override
-//            public void onDataSetUpdated(IDataSet<User> dataSet, StorageChange<User> change) {
-//                if (dataSet.iterator().hasNext()) {
-//                    lastId = dataSet.iterator().next().getValue().id;
-//                }
-//            }
-//        });
+        sortedView.addListener(new IDataSet.Listener<User>() {
+            @Override
+            public void onDataSetUpdated(IDataSet<User> dataSet, StorageChange<User> change) {
+                if (dataSet.iterator().hasNext()) {
+                    lastId = dataSet.iterator().next().getValue().id;
+                } else {
+                    lastId = 0;
+                }
+            }
+        });
 
-//        itemsAdapter = new DataViewListAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, sortedView);
-//        ListView listView = (ListView) findViewById(R.id.listView);
-//        listView.setAdapter(itemsAdapter);
+        itemsAdapter = new DataViewListAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, sortedView);
+        ListView listView = (ListView) findViewById(R.id.listView);
+        listView.setAdapter(itemsAdapter);
+    }
+
     @Override protected void onDestroy() {
         sortedView.close();
         super.onDestroy();
@@ -69,8 +79,9 @@ public class MainActivity extends ActionBarActivity {
 
     @OnClick(R.id.add_many) void onAddManyClick() {
         List<User> users = new ArrayList<>();
-        for (int i = 0; i < 10000; i++) {
-            users.add(genUser(i));
+        int lastId = this.lastId + 1;
+        for (int i = 0; i < BATCH_PUT_COUNT; i++) {
+            users.add(genUser(lastId + i));
         }
         dataCollection.insertAll(users);
     }
