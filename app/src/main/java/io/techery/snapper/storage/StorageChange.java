@@ -1,5 +1,7 @@
 package io.techery.snapper.storage;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,16 +18,16 @@ public class StorageChange<T> {
         this.removed = removed;
     }
 
-    public static <T> StorageChange<T> buildWithRemoved(final List<ItemRef<T>> removed) {
-        return new StorageChange<>(Collections.<ItemRef<T>>emptyList(), Collections.<ItemRef<T>>emptyList(), removed);
+    public static <T> StorageChange<T> buildWithRemoved(final Collection<ItemRef<T>> removed) {
+        return new StorageChange<>(Collections.<ItemRef<T>>emptyList(), Collections.<ItemRef<T>>emptyList(), new ArrayList<>(removed));
     }
 
-    public static <T> StorageChange<T> buildWithAdded(final List<ItemRef<T>> added) {
-        return new StorageChange<>(added, Collections.<ItemRef<T>>emptyList(), Collections.<ItemRef<T>>emptyList());
+    public static <T> StorageChange<T> buildWithAdded(final Collection<ItemRef<T>> added) {
+        return new StorageChange<>(new ArrayList<>(added), Collections.<ItemRef<T>>emptyList(), Collections.<ItemRef<T>>emptyList());
     }
 
-    public static <T> StorageChange<T> buildWithUpdated(final List<ItemRef<T>> updated) {
-        return new StorageChange<>(Collections.<ItemRef<T>>emptyList(), updated, Collections.<ItemRef<T>>emptyList());
+    public static <T> StorageChange<T> buildWithUpdated(final Collection<ItemRef<T>> updated) {
+        return new StorageChange<>(Collections.<ItemRef<T>>emptyList(), new ArrayList<>(updated), Collections.<ItemRef<T>>emptyList());
     }
 
     public static <T> StorageChange<T> empty() {
