@@ -9,6 +9,7 @@ public interface DatabaseAdapter {
 
     public interface EnumerationCallback<T> {
         public T onRecord(byte[] key, byte[] value);
+        public void onBatchComplete(List<T> result);
         public void onComplete(List<T> result);
     }
 
@@ -16,5 +17,5 @@ public interface DatabaseAdapter {
 
     void delete(byte[] array);
 
-    void enumerate(EnumerationCallback enumerationCallback);
+    void enumerate(EnumerationCallback enumerationCallback, boolean withValue);
 }

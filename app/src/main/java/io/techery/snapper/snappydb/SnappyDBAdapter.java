@@ -67,20 +67,26 @@ public class SnappyDBAdapter implements DatabaseAdapter {
     }
 
     @Override
-    public void enumerate(EnumerationCallback enumerationCallback) {
+    public void enumerate(EnumerationCallback enumerationCallback, boolean withValue) {
         KeyIterator keyIterator = null;
         try {
-            ArrayList<Object> objects = new ArrayList<>();
+            ArrayList<Object> allRecords = new ArrayList<>();
             keyIterator = snappyDB.findKeysIterator(this.prefix);
             for (String[] batch : keyIterator.byBatch(1000)) {
+                ArrayList<Object> batchResults = new ArrayList<>();
                 Log.i("LevelDB", "Load Batch:" + batch.length);
                 for (String key : batch) {
-                    byte[] value = snappyDB.getBytes(key);
-                    Object o = enumerationCallback.onRecord(getOriginalKey(key), value);
-                    objects.add(o);
+                    byte[] value;
+                    if (withValue) value = snappyDB.getBytes(key);
+                    else value = null;
+                    Object record = enumerationCallback.onRecord(getOriginalKey(key), value);
+                    if (record != null) batchResults.add(record);
                 }
+                enumerationCallback.onBatchComplete(batchResults);
+                allRecords.addAll(batchResults);
+                batchResults.clear();
             }
-            enumerationCallback.onComplete(objects);
+            enumerationCallback.onComplete(allRecords);
         } catch (SnappydbException e) {
             e.printStackTrace();
         } finally {

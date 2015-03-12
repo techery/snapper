@@ -46,7 +46,6 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
             public void run() {
                 List<ItemRef<T>> added = new ArrayList<>();
                 List<ItemRef<T>> updated = new ArrayList<>();
-
                 for (ItemRef<T> itemRef : items) {
                     db.put(itemRef.getKey().array(), objectConverter.toBytes(itemRef.getValue()));
                     boolean isUpdate = itemsCache.contains(itemRef);
@@ -92,20 +91,21 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
     public void load(final UpdateCallback<T> updateCallback) {
         executor.execute(new Runnable() {
             @Override public void run() {
-                final ArrayList<ItemRef<T>> added = new ArrayList<>();
                 PersistentStorage.this.db.enumerate(new DatabaseAdapter.EnumerationCallback() {
                     @Override
                     public ItemRef<T> onRecord(byte[] key, byte[] value) {
                         ItemRef<T> itemRef = new ItemRef<>(ByteBuffer.wrap(key), objectConverter.fromBytes(value));
-                        itemsCache.add(itemRef);
-                        added.addAll(itemsCache);
                         return itemRef;
                     }
 
-                    @Override public void onComplete(List result) {
+                    @Override public void onBatchComplete(List result) {
+                        itemsCache.addAll(result);
                         updateCallback.onStorageUpdate(StorageChange.buildWithAdded(result));
                     }
-                });
+
+                    @Override public void onComplete(List result) {
+                    }
+                }, true);
             }
         });
     }
@@ -122,12 +122,15 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
                         return null;
                     }
 
-                    @Override public void onComplete(List result) {
-                        ArrayList<ItemRef<T>> removed = new ArrayList<>(itemsCache);
-                        itemsCache.clear();
-                        updateCallback.onStorageUpdate(StorageChange.buildWithRemoved(removed));
+                    @Override public void onBatchComplete(List result) {
                     }
-                });
+
+                    @Override public void onComplete(List result) {
+                        StorageChange<T> storageChange = StorageChange.buildWithRemoved(itemsCache);
+                        itemsCache.clear();
+                        updateCallback.onStorageUpdate(storageChange);
+                    }
+                }, false);
 
             }
         });
