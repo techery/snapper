@@ -3,7 +3,7 @@ package io.techery.snapper.converter;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.serializers.CompatibleFieldSerializer;
+import com.esotericsoftware.kryo.serializers.BeanSerializer;
 
 import java.io.ByteArrayOutputStream;
 
@@ -15,8 +15,7 @@ public class KryoConverter<T> implements ObjectConverter<T> {
     public KryoConverter(Class<T> className) {
         this.className = className;
         this.kryo.register(className);
-        this.kryo.setAsmEnabled(true);
-        this.kryo.setDefaultSerializer(CompatibleFieldSerializer.class);
+        this.kryo.setDefaultSerializer(BeanSerializer.class);
     }
 
     @Override
