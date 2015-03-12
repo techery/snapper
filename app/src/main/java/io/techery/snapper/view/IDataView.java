@@ -11,6 +11,8 @@ public interface IDataView<T> extends IDataSet<T> {
 
     public Builder<T> view();
 
+    void close();
+
     int size();
 
     T getItem(int index);

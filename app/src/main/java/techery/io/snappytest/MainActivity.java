@@ -58,6 +58,9 @@ public class MainActivity extends ActionBarActivity {
 //        itemsAdapter = new DataViewListAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, sortedView);
 //        ListView listView = (ListView) findViewById(R.id.listView);
 //        listView.setAdapter(itemsAdapter);
+    @Override protected void onDestroy() {
+        sortedView.close();
+        super.onDestroy();
     }
 
     @OnClick(R.id.add) void onAddClick() {

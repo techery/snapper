@@ -12,7 +12,6 @@ public abstract class DataSet<T> implements IDataSet<T> {
     @Override
     public void addListener(final Listener<T> listener) {
         listeners.add(listener);
-
         perform(new Runnable() {
             @Override
             public void run() {
@@ -26,9 +25,14 @@ public abstract class DataSet<T> implements IDataSet<T> {
         listeners.remove(listener);
     }
 
+    protected void clearListeners() {
+        listeners.clear();
+    }
+
     protected void didUpdateDataSet(final StorageChange<T> change) {
         for (final Listener<T> listener : listeners) {
             listener.onDataSetUpdated(this, change);
         }
     }
+
 }

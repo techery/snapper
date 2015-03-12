@@ -72,6 +72,16 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         });
     }
 
+    @Override
+    public void close() {
+        IDataSet<T> parentDataSet = DataView.this.dataSetWeakReference.get();
+        if (parentDataSet != null) {
+            parentDataSet.removeListener(DataView.this);
+        }
+        clearListeners();
+        items.clear();
+    }
+
     public Builder<T> view() {
         return new DataViewBuilder<T>(this).sort(this.comparator);
     }
