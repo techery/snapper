@@ -33,6 +33,8 @@ public class KryoConverter<T> implements ObjectConverter<T> {
     @Override
     public T fromBytes(byte[] bytes) {
         Input input = new Input(bytes);
-        return kryo.readObject(input, this.className);
+        T t = kryo.readObject(input, this.className);
+        input.close();
+        return t;
     }
 }
