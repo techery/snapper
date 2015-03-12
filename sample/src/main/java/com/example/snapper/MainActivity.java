@@ -1,4 +1,4 @@
-package techery.io.snappytest;
+package com.example.snapper;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;

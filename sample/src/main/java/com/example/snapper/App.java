@@ -1,4 +1,4 @@
-package techery.io.snappytest;
+package com.example.snapper;
 
 import android.app.Application;
 import android.content.Context;

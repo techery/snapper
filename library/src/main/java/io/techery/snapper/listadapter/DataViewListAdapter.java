@@ -3,6 +3,7 @@ package io.techery.snapper.listadapter;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 
 import java.util.List;
@@ -10,9 +11,10 @@ import java.util.List;
 import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.view.IDataView;
-import timber.log.Timber;
 
 public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.Listener<T> {
+
+    static final String TAG = DataViewListAdapter.class.getSimpleName();
 
     private IDataView<T> dataView;
     private final Handler handler;
@@ -49,12 +51,12 @@ public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.
     }
 
     private void syncWithDataView() {
-        Timber.i("Synced with data set");
+        Log.i(TAG, "Synced with data set");
         clear();
         if (dataView != null) {
             List<T> collection = dataView.toList();
             addAll(collection);
-            Timber.d("Data added %d", collection.size());
+            Log.i(TAG, "Data added " + collection.size());
         }
     }
 }
