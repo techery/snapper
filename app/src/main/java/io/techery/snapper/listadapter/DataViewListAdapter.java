@@ -19,8 +19,8 @@ public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.
 
     public DataViewListAdapter(Context context, int resource, IDataView<T> dataView) {
         super(context, resource);
-        setDataView(dataView);
         handler = new Handler(Looper.getMainLooper());
+        setDataView(dataView);
     }
 
     public IDataView<T> getDataView() {
@@ -38,13 +38,14 @@ public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.
 
     @Override
     public void onDataSetUpdated(final IDataSet<T> dataSet, StorageChange<T> change) {
-        handler.post(new Runnable() {
+        handler.removeCallbacksAndMessages(null);
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 syncWithDataView();
                 notifyDataSetChanged();
             }
-        });
+        }, 50);
     }
 
     private void syncWithDataView() {
