@@ -27,18 +27,16 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     private final WeakReference<IDataSet<T>> dataSetWeakReference;
 
     private List<ItemRef<T>> build(IDataSet<T> dataSet) {
-        Queryable<ItemRef<T>> queryable = Queryable.from(dataSet);
-        queryable = queryable.where(new Predicate<ItemRef<T>>() {
-            @Override
-            public boolean apply(ItemRef<T> element) {
-                return DataView.this.predicate.apply(element.getValue());
-            }
-        });
-        if (this.comparator != null) {
-            queryable = queryable.sort(getItemComparator());
-        }
-
-        return queryable.toList();
+        return Queryable
+                .from(dataSet)
+                .where(new Predicate<ItemRef<T>>() {
+                    @Override
+                    public boolean apply(ItemRef<T> element) {
+                        return DataView.this.predicate.apply(element.getValue());
+                    }
+                })
+                .sort(getItemComparator())
+                .toList();
     }
 
     private Comparator<ItemRef<T>> getItemComparator() {
@@ -50,7 +48,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         };
     }
 
-    public DataView(final IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
+    DataView(final IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
         this.comparator = comparator;
         this.predicate = predicate;
         this.dataSetWeakReference = new WeakReference<>(dataSet);
@@ -59,10 +57,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
             @Override
             public void run() {
                 items.addAll(build(dataSet));
-
-                StorageChange<T> change = new StorageChange<>(items, new ArrayList<ItemRef<T>>(), new ArrayList<ItemRef<T>>());
-
-                didUpdateDataSet(change);
+                didUpdateDataSet(StorageChange.buildWithAdded(items));
 
                 IDataSet<T> parentDataSet = DataView.this.dataSetWeakReference.get();
                 if (parentDataSet != null) {
@@ -98,22 +93,19 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
     @Override
     public List<T> toList() {
-        return Queryable.from(items).map(new Converter<ItemRef<T>, T>() {
-            @Override
-            public T convert(ItemRef<T> element) {
-                return element.getValue();
-            }
-        }).toList();
+        return Queryable
+                .from(items)
+                .map(new Converter<ItemRef<T>, T>() {
+                    @Override
+                    public T convert(ItemRef<T> element) {
+                        return element.getValue();
+                    }
+                }).toList();
     }
 
     private int indexForNewItem(ItemRef<T> item) {
-        final int index = Collections.binarySearch(this.items, item, getItemComparator());
-
-        if (index >= 0) {
-            return index;
-        } else {
-            return -index - 1;
-        }
+        int index = Collections.binarySearch(this.items, item, getItemComparator());
+        return index >= 0 ? index : -index - 1;
     }
 
     @Override
@@ -122,31 +114,28 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     }
 
     private StorageChange<T> processChange(StorageChange<T> change) {
-
-        final List<ItemRef<T>> addedItems = processAddedItems(change.getAdded());
-        final List<ItemRef<T>> removedItems = processRemovedItems(change.getRemoved());
-        final List<ItemRef<T>> updatedItems = processUpdatedItems(change.getUpdated(), removedItems);
+        List<ItemRef<T>> addedItems = processAddedItems(change.getAdded());
+        List<ItemRef<T>> removedItems = processRemovedItems(change.getRemoved());
+        List<ItemRef<T>> updatedItems = processUpdatedItems(change.getUpdated(), removedItems);
 
         return new StorageChange<>(addedItems, updatedItems, removedItems);
     }
 
     private List<ItemRef<T>> processRemovedItems(List<ItemRef<T>> removed) {
-        final List<ItemRef<T>> removedItems = new ArrayList<>();
-
+        List<ItemRef<T>> removedItems = new ArrayList<>();
         for (ItemRef<T> item : removed) {
             if (this.items.contains(item)) {
                 this.items.remove(item);
                 removedItems.add(item);
             }
         }
-
-        Log.d("DataView", "DataView Removed:" + removedItems.size() + "; Items:" + this.items.size());
+        Log.i("DataView", "DataView Removed:" + removedItems.size() + "; Items:" + this.items.size());
 
         return removedItems;
     }
 
     private List<ItemRef<T>> processUpdatedItems(List<ItemRef<T>> updated, List<ItemRef<T>> localRemovedItems) {
-        final List<ItemRef<T>> updatedItems = new ArrayList<>();
+        List<ItemRef<T>> updatedItems = new ArrayList<>();
 
         for (ItemRef<T> item : updated) {
             if (this.items.contains(item)) {
@@ -161,14 +150,13 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
                 }
             }
         }
-
-        Log.d("DataView", "DataView Updated:" + updatedItems.size() + "; Items:" + this.items.size());
+        Log.i("DataView", "DataView Updated:" + updatedItems.size() + "; Items:" + this.items.size());
 
         return updatedItems;
     }
 
     private List<ItemRef<T>> processAddedItems(List<ItemRef<T>> added) {
-        final List<ItemRef<T>> addedItems = new ArrayList<>();
+        List<ItemRef<T>> addedItems = new ArrayList<>();
 
         for (ItemRef<T> item : added) {
             if (this.predicate.apply(item.getValue())) {
@@ -177,8 +165,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
                 addedItems.add(item);
             }
         }
-
-        Log.d("DataView", "DataView Added:" + addedItems.size() + "; Items:" + this.items.size());
+        Log.i("DataView", "DataView Added:" + addedItems.size() + "; Items:" + this.items.size());
 
         return addedItems;
     }
