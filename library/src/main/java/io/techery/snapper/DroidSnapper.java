@@ -56,21 +56,24 @@ public class DroidSnapper extends Snapper {
         }
 
         public Snapper build() {
-            if (dbFactory == null) {
-                useDefaultDatabaseFactory();
-            }
-            if (componentFactory == null) {
-                useDefaultComponentFactory(dbFactory);
-            }
-            if (storageFactory == null) {
-                useDefaultStorageFactory(componentFactory);
-            }
+            if (dbFactory == null) useDefaultDatabaseFactory();
+            if (componentFactory == null) useDefaultComponentFactory(dbFactory);
+            if (storageFactory == null) useDefaultStorageFactory(componentFactory);
 
             return new Snapper(storageFactory, componentFactory);
         }
 
+        ///////////////////////////////////////////////////////////////////////////
+        // Defaults
+        ///////////////////////////////////////////////////////////////////////////
+
         public DatabaseFactory useDefaultDatabaseFactory() {
             dbFactory = new SnappyDBFactory(context);
+            return dbFactory;
+        }
+
+        public DatabaseFactory useDefaultDatabaseFactory(String dbName) {
+            dbFactory = new SnappyDBFactory(context, dbName);
             return dbFactory;
         }
 
