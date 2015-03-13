@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.techery:snapper.library:0.1.0'
+    compile 'com.github.techery:snapper.library:{latestVersion}'
     ...
 }
 ```
