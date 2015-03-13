@@ -5,10 +5,10 @@ import com.innahema.collections.query.functions.Function1;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.techery.snapper.dataset.DataSet;
@@ -83,43 +83,40 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements S
     private static class CollectionExecutor implements Executor {
 
         ExecutorService executor;
-        LinkedBlockingQueue<Runnable> queue;
+        ConcurrentLinkedQueue<Runnable> queue;
         volatile boolean canConsume = true;
         ReentrantLock lock;
 
         private CollectionExecutor(ExecutorService executor) {
             this.executor = executor;
-            this.queue = new LinkedBlockingQueue();
+            this.queue = new ConcurrentLinkedQueue();
             lock = new ReentrantLock();
         }
 
-        @Override public void execute(Runnable command) {
-            try {
-                queue.put(command);
-                lock.lock();
-                if (!canConsume) {
-                    lock.unlock();
-                    return;
-                }
-                canConsume = false;
+        @Override
+        public void execute(Runnable command) {
+            lock.lock();
+            queue.add(command);
+            if (!canConsume) {
                 lock.unlock();
-                executor.execute(new Runnable() {
-                    @Override public void run() {
-                        lock.lock();
-                        Runnable firstCommand = queue.poll();
-                        if (firstCommand != null) {
-                            lock.unlock();
-                            firstCommand.run();
-                            executor.execute(this);
-                        } else {
-                            canConsume = true;
-                            lock.unlock();
-                        }
-                    }
-                });
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                return;
             }
+            canConsume = false;
+            executor.execute(new Runnable() {
+                @Override public void run() {
+                    lock.lock();
+                    Runnable firstCommand = queue.poll();
+                    if (firstCommand != null) {
+                        lock.unlock();
+                        firstCommand.run();
+                        executor.execute(this);
+                    } else {
+                        canConsume = true;
+                        lock.unlock();
+                    }
+                }
+            });
+            lock.unlock();
         }
     }
 }
