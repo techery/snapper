@@ -159,7 +159,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         List<ItemRef<T>> addedItems = new ArrayList<>();
 
         for (ItemRef<T> item : added) {
-            if (this.predicate.apply(item.getValue())) {
+            if (!items.contains(item) && predicate.apply(item.getValue())) {
                 int index = indexForNewItem(item);
                 this.items.add(index, item);
                 addedItems.add(item);
