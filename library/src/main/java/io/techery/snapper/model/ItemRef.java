@@ -1,50 +1,44 @@
 package io.techery.snapper.model;
 
-import java.nio.ByteBuffer;
-import java.security.InvalidParameterException;
+import java.util.Arrays;
 
 public class ItemRef<T> {
-    private final ByteBuffer key;
+    private final byte[] key;
     private final T value;
-    private final int keyHash;
 
     public static <T extends Indexable> ItemRef<T> make(T item) {
         return new ItemRef<>(item.index(), item);
     }
 
-    public ItemRef(ByteBuffer key, T value) {
-
-        if (key.capacity() != 4) {
-            throw new InvalidParameterException("Invalid key:" + key);
-        }
-
-        this.key = key;
+    public ItemRef(byte[] key, T value) {
         this.value = value;
-        key.rewind();
-        keyHash = key.getInt();
-        key.rewind();
+        this.key = key;
     }
 
     public T getValue() {
         return value;
     }
 
-    public ByteBuffer getKey() {
+    public byte[] getKey() {
         return key;
     }
 
     @Override
     public boolean equals(Object obj) {
-
-        if (!(obj instanceof ItemRef)) {
+        if (this == obj)
+            return true;
+        if (obj == null)
             return false;
-        }
-
-        return getKey().compareTo(((ItemRef<T>) obj).getKey()) == 0;
+        if (getClass() != obj.getClass())
+            return false;
+        ItemRef other = (ItemRef) obj;
+        if (!Arrays.equals(key, other.key))
+            return false;
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return keyHash;
+        return this.value.hashCode();
     }
 }

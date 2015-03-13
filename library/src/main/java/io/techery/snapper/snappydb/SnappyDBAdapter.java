@@ -1,5 +1,6 @@
 package io.techery.snapper.snappydb;
 
+import android.util.Base64;
 import android.util.Log;
 
 import com.snappydb.DB;
@@ -8,7 +9,6 @@ import com.snappydb.SnappydbException;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
 import io.techery.snapper.storage.DatabaseAdapter;
@@ -38,8 +38,7 @@ public class SnappyDBAdapter implements DatabaseAdapter {
     }
 
     private String getFullKey(byte[] bytes) throws UnsupportedEncodingException {
-        final String key = new String(bytes, "UTF-8");
-        return prefix + key;
+        return prefix + Base64.encodeToString(bytes, Base64.NO_WRAP | Base64.NO_PADDING);
     }
 
     private byte[] getOriginalKey(String key) {
@@ -50,11 +49,7 @@ public class SnappyDBAdapter implements DatabaseAdapter {
             originalKey[i] = key.getBytes()[prefix.length() + i];
         }
 
-        if (originalKey.length != 4) {
-            throw new InvalidParameterException("Invalid key:" + key);
-        }
-
-        return originalKey;
+        return Base64.decode(originalKey, Base64.NO_WRAP | Base64.NO_PADDING);
     }
 
     @Override
@@ -86,6 +81,7 @@ public class SnappyDBAdapter implements DatabaseAdapter {
                 allRecords.addAll(batchResults);
                 batchResults.clear();
             }
+            Log.i("DatabaseAdapter", "Enumerated " + allRecords.size());
             enumerationCallback.onComplete(allRecords);
         } catch (SnappydbException e) {
             e.printStackTrace();

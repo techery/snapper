@@ -135,8 +135,22 @@ public class MainActivity extends ActionBarActivity {
         }
 
         @Override
-        public ByteBuffer index() {
-            return ByteBuffer.allocate(4).putInt(id);
+        public byte[] index() {
+            return ByteBuffer.allocate(4).putInt(id).array();
+        }
+
+        @Override public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            User user = (User) o;
+
+            return id == user.id;
+
+        }
+
+        @Override public int hashCode() {
+            return id;
         }
 
         public int getId() {

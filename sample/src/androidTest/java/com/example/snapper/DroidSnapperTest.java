@@ -13,7 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.nio.ByteBuffer;
 import java.util.Comparator;
 
 import io.techery.snapper.DataCollection;
@@ -204,8 +203,8 @@ public class DroidSnapperTest extends ApplicationTestCase<App> {
         }
 
         @Override
-        public ByteBuffer index() {
-            return ByteBuffer.wrap(userId.getBytes());
+        public byte[] index() {
+            return userId.getBytes();
         }
     }
 

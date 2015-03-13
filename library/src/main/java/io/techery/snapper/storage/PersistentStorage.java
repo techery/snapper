@@ -4,7 +4,6 @@ import android.util.Log;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -47,7 +46,7 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
                 List<ItemRef<T>> added = new ArrayList<>();
                 List<ItemRef<T>> updated = new ArrayList<>();
                 for (ItemRef<T> itemRef : items) {
-                    db.put(itemRef.getKey().array(), objectConverter.toBytes(itemRef.getValue()));
+                    db.put(itemRef.getKey(), objectConverter.toBytes(itemRef.getValue()));
                     boolean isUpdate = itemsCache.contains(itemRef);
                     itemsCache.add(itemRef);
                     if (isUpdate) {
@@ -75,9 +74,9 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
             @Override
             public void run() {
                 for (ItemRef<T> itemRef : items) {
-                    db.delete(itemRef.getKey().array());
-                    itemsCache.remove(itemRef);
+                    db.delete(itemRef.getKey());
                 }
+                itemsCache.removeAll(items);
                 updateCallback.onStorageUpdate(StorageChange.buildWithRemoved(items));
             }
         });
@@ -94,7 +93,7 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
                 PersistentStorage.this.db.enumerate(new DatabaseAdapter.EnumerationCallback() {
                     @Override
                     public ItemRef<T> onRecord(byte[] key, byte[] value) {
-                        ItemRef<T> itemRef = new ItemRef<>(ByteBuffer.wrap(key), objectConverter.fromBytes(value));
+                        ItemRef<T> itemRef = new ItemRef<>(key, objectConverter.fromBytes(value));
                         return itemRef;
                     }
 
