@@ -1,5 +1,7 @@
 ## Snapper
 NoSQL fast-serializable storage with DataViews, Sorting, Filtering and more
+## Status
+[![Build Status](https://travis-ci.org/techery/snapper.svg)](https://travis-ci.org/techery/snapper)
 ## Getting started
 Coming soon...
 ## Dev. status
