@@ -7,14 +7,16 @@ import java.util.Map;
 import io.techery.snapper.model.Indexable;
 import io.techery.snapper.storage.StorageFactory;
 
-public abstract class Snapper {
+public class Snapper {
 
     private final StorageFactory storageFactory;
+    private final ComponentFactory componentFactory;
     private final Map<Class<? extends Indexable>, DataCollection> dataCollectionCache;
 
-    public Snapper(StorageFactory storageFactory) {
+    public Snapper(StorageFactory storageFactory, ComponentFactory componentFactory) {
         this.storageFactory = storageFactory;
-        dataCollectionCache = new HashMap<>();
+        this.componentFactory = componentFactory;
+        this.dataCollectionCache = new HashMap<>();
     }
 
     public <T extends Indexable> DataCollection<T> collection(Class<T> className) {
@@ -25,7 +27,10 @@ public abstract class Snapper {
                 dataCollection = dataCollectionCache.get(className);
                 if (dataCollection == null) {
                     try {
-                        dataCollection = new DataCollection<>(storageFactory.createStorage(className));
+                        dataCollection = new DataCollection<>(
+                                storageFactory.createStorage(className),
+                                componentFactory.createCollectionExecutor()
+                        );
                     } catch (IOException e) {
                         e.printStackTrace();
                         return null;

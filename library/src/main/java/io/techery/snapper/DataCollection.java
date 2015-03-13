@@ -7,8 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.techery.snapper.dataset.DataSet;
@@ -24,15 +22,10 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements S
 
     private final Storage<T> storage;
     private final Executor executor;
-    private static final ExecutorService parentExecutor;
 
-    static {
-        parentExecutor = Executors.newFixedThreadPool(4);
-    }
-
-    public DataCollection(Storage<T> storage) {
+    public DataCollection(Storage<T> storage, Executor executor) {
         this.storage = storage;
-        this.executor = new CollectionExecutor(parentExecutor);
+        this.executor = new CollectionExecutor(executor);
         this.storage.load(this);
     }
 
@@ -82,12 +75,12 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements S
 
     private static class CollectionExecutor implements Executor {
 
-        ExecutorService executor;
+        Executor executor;
         ConcurrentLinkedQueue<Runnable> queue;
         volatile boolean canConsume = true;
         ReentrantLock lock;
 
-        private CollectionExecutor(ExecutorService executor) {
+        private CollectionExecutor(Executor executor) {
             this.executor = executor;
             this.queue = new ConcurrentLinkedQueue();
             lock = new ReentrantLock();
