@@ -29,7 +29,7 @@ public class MainActivity extends ActionBarActivity {
     DataViewListAdapter<User> itemsAdapter;
     volatile int lastId;
 
-    static final int BATCH_PUT_COUNT = 1000;
+    static final int BATCH_PUT_COUNT = 10000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -10,9 +10,10 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Set;
 
 import io.techery.snapper.dataset.DataSet;
 import io.techery.snapper.dataset.IDataSet;
@@ -21,55 +22,60 @@ import io.techery.snapper.storage.StorageChange;
 
 public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Listener<T> {
 
-    protected final List<ItemRef<T>> items = new CopyOnWriteArrayList<>();
-    private Predicate<T> predicate;
-    private Comparator<T> comparator;
-    private final WeakReference<IDataSet<T>> dataSetWeakReference;
+    public static final String TAG = "DataView";
 
-    private List<ItemRef<T>> build(IDataSet<T> dataSet) {
-        return Queryable
-                .from(dataSet)
-                .where(new Predicate<ItemRef<T>>() {
-                    @Override
-                    public boolean apply(ItemRef<T> element) {
-                        return DataView.this.predicate.apply(element.getValue());
-                    }
-                })
-                .sort(getItemComparator())
-                .toList();
-    }
+    private final List<ItemRef<T>> items;
+    private final Set<ItemRef<T>> keys;
+    private final Predicate<T> predicate;
+    private final Comparator<T> comparator;
+    private final Comparator<ItemRef<T>> itemComparator;
+    private final WeakReference<IDataSet<T>> dataSetRef;
 
-    private Comparator<ItemRef<T>> getItemComparator() {
-        return new Comparator<ItemRef<T>>() {
+    DataView(final IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
+        this.dataSetRef = new WeakReference<>(dataSet);
+        this.comparator = comparator;
+        this.predicate = predicate;
+        this.items = new ArrayList<>();
+        this.keys = new HashSet<>();
+
+        this.itemComparator = new Comparator<ItemRef<T>>() {
             @Override
             public int compare(ItemRef<T> o1, ItemRef<T> o2) {
                 return DataView.this.comparator.compare(o1.getValue(), o2.getValue());
             }
         };
+
+        initializeItems(dataSet);
     }
 
-    DataView(final IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
-        this.comparator = comparator;
-        this.predicate = predicate;
-        this.dataSetWeakReference = new WeakReference<>(dataSet);
-
-        dataSet.perform(new Runnable() {
+    private void initializeItems(final IDataSet<T> parentDataSet) {
+        parentDataSet.perform(new Runnable() {
             @Override
             public void run() {
-                items.addAll(build(dataSet));
+                Log.d(TAG, "Initializing");
+                List<ItemRef<T>> acceptedItems = Queryable.from(parentDataSet).where(new Predicate<ItemRef<T>>() {
+                    @Override public boolean apply(ItemRef<T> element) {
+                        return DataView.this.predicate.apply(element.getValue());
+                    }
+                }).toList();
+                keys.addAll(acceptedItems);
+                items.addAll(acceptedItems);
+                Collections.sort(items, itemComparator);
+
                 didUpdateDataSet(StorageChange.buildWithAdded(items));
 
-                IDataSet<T> parentDataSet = DataView.this.dataSetWeakReference.get();
+                IDataSet<T> parentDataSet = DataView.this.dataSetRef.get();
                 if (parentDataSet != null) {
                     parentDataSet.addListener(DataView.this);
                 }
+                Log.d(TAG, "Initialized with " + items.size() + " elements");
             }
         });
     }
 
     @Override
     public void close() {
-        IDataSet<T> parentDataSet = DataView.this.dataSetWeakReference.get();
+        IDataSet<T> parentDataSet = DataView.this.dataSetRef.get();
         if (parentDataSet != null) {
             parentDataSet.removeListener(DataView.this);
         }
@@ -83,12 +89,12 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
     @Override
     public int size() {
-        return this.items.size();
+        return items.size();
     }
 
     @Override
     public T getItem(int index) {
-        return this.items.get(index).getValue();
+        return items.get(index).getValue();
     }
 
     @Override
@@ -103,11 +109,6 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
                 }).toList();
     }
 
-    private int indexForNewItem(ItemRef<T> item) {
-        int index = Collections.binarySearch(this.items, item, getItemComparator());
-        return index >= 0 ? index : -index - 1;
-    }
-
     @Override
     public void onDataSetUpdated(IDataSet<T> dataSet, StorageChange<T> change) {
         didUpdateDataSet(processChange(change));
@@ -116,58 +117,65 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     private StorageChange<T> processChange(StorageChange<T> change) {
         List<ItemRef<T>> addedItems = processAddedItems(change.getAdded());
         List<ItemRef<T>> removedItems = processRemovedItems(change.getRemoved());
-        List<ItemRef<T>> updatedItems = processUpdatedItems(change.getUpdated(), removedItems);
+        List<ItemRef<T>> updatedItems = processUpdatedItems(change.getUpdated(), addedItems, removedItems);
 
         return new StorageChange<>(addedItems, updatedItems, removedItems);
     }
 
+    private List<ItemRef<T>> processAddedItems(List<ItemRef<T>> added) {
+        Log.d(TAG + ":ADD", "started with size " + added.size());
+        List<ItemRef<T>> addedItems = new ArrayList<>();
+
+        for (ItemRef<T> item : added) {
+            if (predicate.apply(item.getValue()) && this.keys.add(item)) {
+                this.items.add(item);
+                addedItems.add(item);
+            }
+        }
+        Collections.sort(items, itemComparator);
+
+        Log.d(TAG + ":ADD", "finished with new:" + addedItems.size() + "; overall:" + this.items.size());
+        return addedItems;
+    }
+
     private List<ItemRef<T>> processRemovedItems(List<ItemRef<T>> removed) {
+        Log.d(TAG + ":REMOVE", "started with size " + removed.size());
+        long start = System.currentTimeMillis();
         List<ItemRef<T>> removedItems = new ArrayList<>();
         for (ItemRef<T> item : removed) {
-            if (this.items.contains(item)) {
+            if (this.keys.remove(item)) {
                 this.items.remove(item);
                 removedItems.add(item);
             }
         }
-        Log.i("DataView", "DataView Removed:" + removedItems.size() + "; Items:" + this.items.size());
-
+        Log.d(TAG + ":REMOVE", "finished with new:" + removedItems.size() + "; overall:" + this.items.size());
         return removedItems;
     }
 
-    private List<ItemRef<T>> processUpdatedItems(List<ItemRef<T>> updated, List<ItemRef<T>> localRemovedItems) {
+    private List<ItemRef<T>> processUpdatedItems(List<ItemRef<T>> updated, List<ItemRef<T>> localAddedItems, List<ItemRef<T>> localRemovedItems) {
+        Log.d(TAG + ":UPDATE", "started with size " + updated.size());
         List<ItemRef<T>> updatedItems = new ArrayList<>();
 
+        boolean hasNew = false;
         for (ItemRef<T> item : updated) {
-            if (this.items.contains(item)) {
-                if (this.predicate.apply(item.getValue())) {
+            if (this.predicate.apply(item.getValue())) {
+                if (this.keys.contains(item)) {
                     this.items.remove(item);
-                    int index = indexForNewItem(item);
-                    this.items.add(index, item);
                     updatedItems.add(item);
                 } else {
-                    this.items.remove(item);
-                    localRemovedItems.add(item);
+                    localAddedItems.add(item);
                 }
+                this.items.add(item);
+                hasNew = true;
+            } else if (this.keys.remove(item)) {
+                this.items.remove(item);
+                localRemovedItems.add(item);
             }
         }
-        Log.i("DataView", "DataView Updated:" + updatedItems.size() + "; Items:" + this.items.size());
+        if (hasNew) Collections.sort(items, itemComparator);
 
+        Log.d(TAG + ":UPDATE", "finished with new:" + updatedItems.size() + "; overall:" + this.items.size());
         return updatedItems;
-    }
-
-    private List<ItemRef<T>> processAddedItems(List<ItemRef<T>> added) {
-        List<ItemRef<T>> addedItems = new ArrayList<>();
-
-        for (ItemRef<T> item : added) {
-            if (!items.contains(item) && predicate.apply(item.getValue())) {
-                int index = indexForNewItem(item);
-                this.items.add(index, item);
-                addedItems.add(item);
-            }
-        }
-        Log.i("DataView", "DataView Added:" + addedItems.size() + "; Items:" + this.items.size());
-
-        return addedItems;
     }
 
     @Override
@@ -177,9 +185,10 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
     @Override
     public void perform(Runnable runnable) {
-        IDataSet<T> dataSet = this.dataSetWeakReference.get();
+        IDataSet<T> dataSet = this.dataSetRef.get();
         if (dataSet != null) {
             dataSet.perform(runnable);
         }
     }
+
 }
