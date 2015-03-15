@@ -16,7 +16,10 @@ repositories {
 }
 
 dependencies {
-    compile 'com.snappydb:snappydb-lib:0.5.0'
+    compile('com.snappydb:snappydb-lib:0.5.0') {
+        exclude module: 'kryo'
+    }
+    compile 'com.esotericsoftware:kryo:3.0.0'
     compile 'com.innahema:collections-query:0.2.8'
 }
 

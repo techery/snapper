@@ -9,31 +9,32 @@ import java.io.ByteArrayOutputStream;
 
 public class KryoConverter<T> implements ObjectConverter<T> {
 
-    private final Kryo kryo = new Kryo();
+    private final Kryo kryo;
     private final Class<T> className;
+
+    private Input input;
+    private Output output;
 
     public KryoConverter(Class<T> className) {
         this.className = className;
+        this.kryo = new Kryo();
         this.kryo.register(className);
         this.kryo.setDefaultSerializer(CompatibleFieldSerializer.class);
+        //
+        this.input = new Input();
+        this.output = new Output(new ByteArrayOutputStream());
     }
 
     @Override
     public byte[] toBytes(T item) {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        Output output = new Output(stream);
-
         kryo.writeObject(output, item);
-        output.close();
-
-        return stream.toByteArray();
+        output.clear();
+        return output.getBuffer();
     }
 
     @Override
     public T fromBytes(byte[] bytes) {
-        Input input = new Input(bytes);
-        T t = kryo.readObject(input, this.className);
-        input.close();
-        return t;
+        input.setBuffer(bytes);
+        return kryo.readObject(input, this.className);
     }
 }
