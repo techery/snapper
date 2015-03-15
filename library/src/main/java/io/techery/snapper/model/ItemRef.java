@@ -5,6 +5,7 @@ import java.util.Arrays;
 public class ItemRef<T> {
     private final byte[] key;
     private final T value;
+    private final int keyHash;
 
     public static <T extends Indexable> ItemRef<T> make(T item) {
         return new ItemRef<>(item.index(), item);
@@ -13,6 +14,7 @@ public class ItemRef<T> {
     public ItemRef(byte[] key, T value) {
         this.value = value;
         this.key = key;
+        this.keyHash = Arrays.hashCode(key);
     }
 
     public T getValue() {
@@ -39,6 +41,6 @@ public class ItemRef<T> {
 
     @Override
     public int hashCode() {
-        return this.value.hashCode();
+        return keyHash;
     }
 }
