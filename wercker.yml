@@ -31,3 +31,6 @@ build:
             name: run gradle build
             code: |
                 gradle --parallel -q --project-cache-dir=$WERCKER_CACHE_DIR --full-stacktrace build
+    after-steps:
+        - wantedly/pretty-slack-notify:
+            webhook_url: $SLACK_WEBHOOK_URL
