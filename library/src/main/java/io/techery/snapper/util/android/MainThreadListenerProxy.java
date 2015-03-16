@@ -21,9 +21,9 @@ public class MainThreadListenerProxy<T> implements IDataSet.Listener<T> {
     @Override public void onDataSetUpdated(final IDataSet<T> dataSet, final StorageChange<T> change) {
         handler.post(new Runnable() {
             @Override public void run() {
-                IDataSet.Listener<T> notifier = listenerRef.get();
-                if (notifier != null) {
-                    notifier.onDataSetUpdated(dataSet, change);
+                IDataSet.Listener<T> listener = listenerRef.get();
+                if (listener != null) {
+                    listener.onDataSetUpdated(dataSet, change);
                 }
             }
         });
