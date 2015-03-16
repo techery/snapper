@@ -14,8 +14,11 @@ public class MainThreadListenerProxy<T> implements IDataSet.Listener<T> {
     private final WeakReference<IDataSet.Listener<T>> listenerRef;
 
     public MainThreadListenerProxy(IDataSet.Listener<T> listener) {
-        handler = new Handler(Looper.getMainLooper());
+        if (listener == null) {
+            throw new IllegalArgumentException("Listener may not be null");
+        }
         listenerRef = new WeakReference<IDataSet.Listener<T>>(listener);
+        handler = new Handler(Looper.getMainLooper());
     }
 
     @Override public void onDataSetUpdated(final IDataSet<T> dataSet, final StorageChange<T> change) {
