@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.techery.snapper.dataset.DataSet;
 import io.techery.snapper.dataset.IDataSet;
@@ -30,6 +31,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     private final Comparator<T> comparator;
     private final Comparator<ItemRef<T>> itemComparator;
     private final WeakReference<IDataSet<T>> dataSetRef;
+    private final ReentrantLock lock;
 
     DataView(final IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
         this.dataSetRef = new WeakReference<>(dataSet);
@@ -37,6 +39,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         this.predicate = predicate;
         this.items = new ArrayList<>();
         this.keys = new HashSet<>();
+        this.lock = new ReentrantLock();
 
         this.itemComparator = new Comparator<ItemRef<T>>() {
             @Override
@@ -58,9 +61,11 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
                         return DataView.this.predicate.apply(element.getValue());
                     }
                 }).toList();
+                lock.lock();
                 keys.addAll(acceptedItems);
                 items.addAll(acceptedItems);
                 Collections.sort(items, itemComparator);
+                lock.unlock();
 
                 didUpdateDataSet(StorageChange.buildWithAdded(items));
 
@@ -80,7 +85,9 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
             parentDataSet.removeListener(DataView.this);
         }
         clearListeners();
+        lock.lock();
         items.clear();
+        lock.unlock();
     }
 
     public Builder<T> view() {
@@ -94,12 +101,16 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
     @Override
     public T getItem(int index) {
-        return items.get(index).getValue();
+        lock.lock();
+        T value = items.get(index).getValue();
+        lock.unlock();
+        return value;
     }
 
     @Override
     public List<T> toList() {
-        return Queryable
+        lock.lock();
+        List<T> list = Queryable
                 .from(items)
                 .map(new Converter<ItemRef<T>, T>() {
                     @Override
@@ -107,6 +118,8 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
                         return element.getValue();
                     }
                 }).toList();
+        lock.unlock();
+        return list;
     }
 
     @Override
@@ -128,7 +141,9 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
         for (ItemRef<T> item : added) {
             if (predicate.apply(item.getValue()) && this.keys.add(item)) {
+                lock.lock();
                 this.items.add(item);
+                lock.unlock();
                 addedItems.add(item);
             }
         }
@@ -144,7 +159,9 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         List<ItemRef<T>> removedItems = new ArrayList<>();
         for (ItemRef<T> item : removed) {
             if (this.keys.remove(item)) {
+                lock.lock();
                 this.items.remove(item);
+                lock.unlock();
                 removedItems.add(item);
             }
         }
@@ -160,19 +177,27 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         for (ItemRef<T> item : updated) {
             if (this.predicate.apply(item.getValue())) {
                 if (this.keys.contains(item)) {
+                    lock.lock();
                     this.items.remove(item);
+                    lock.unlock();
                     updatedItems.add(item);
                 } else {
                     localAddedItems.add(item);
                 }
+                lock.lock();
                 this.items.add(item);
+                lock.unlock();
                 hasNew = true;
             } else if (this.keys.remove(item)) {
+                lock.lock();
                 this.items.remove(item);
+                lock.unlock();
                 localRemovedItems.add(item);
             }
         }
+        lock.lock();
         if (hasNew) Collections.sort(items, itemComparator);
+        lock.unlock();
 
         Log.d(TAG + ":UPDATE", "finished with new:" + updatedItems.size() + "; overall:" + this.items.size());
         return updatedItems;
