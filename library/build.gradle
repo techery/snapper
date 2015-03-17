@@ -1,5 +1,5 @@
 apply plugin: 'com.android.library'
-apply plugin: 'android-maven'
+apply plugin: 'com.github.dcendents.android-maven'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     compile('com.snappydb:snappydb-lib:0.5.0') {
-        exclude module: 'kryo'
+        exclude group: 'com.esotericsoftware.kryo', module: 'kryo'
     }
     compile 'com.esotericsoftware:kryo:3.0.0'
     compile 'com.innahema:collections-query:0.2.8'
