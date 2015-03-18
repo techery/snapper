@@ -47,12 +47,10 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
                 List<ItemRef<T>> updated = new ArrayList<>();
                 for (ItemRef<T> itemRef : items) {
                     db.put(itemRef.getKey(), objectConverter.toBytes(itemRef.getValue()));
-                    boolean isUpdate = itemsCache.contains(itemRef);
-                    itemsCache.add(itemRef);
-                    if (isUpdate) {
-                        updated.add(itemRef);
-                    } else {
+                    if (itemsCache.add(itemRef)) {
                         added.add(itemRef);
+                    } else {
+                        updated.add(itemRef);
                     }
                 }
                 Log.i("Storage", "Insert:" + added.size());
@@ -90,19 +88,16 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
     public void load(final UpdateCallback<T> updateCallback) {
         executor.execute(new Runnable() {
             @Override public void run() {
-                PersistentStorage.this.db.enumerate(new DatabaseAdapter.EnumerationCallback() {
+                PersistentStorage.this.db.enumerate(new DatabaseAdapter.EnumerationCallback<ItemRef<T>>() {
                     @Override
                     public ItemRef<T> onRecord(byte[] key, byte[] value) {
                         ItemRef<T> itemRef = new ItemRef<>(key, objectConverter.fromBytes(value));
                         return itemRef;
                     }
 
-                    @Override public void onBatchComplete(List result) {
+                    @Override public void onComplete(List<ItemRef<T>> result) {
                         itemsCache.addAll(result);
                         updateCallback.onStorageUpdate(StorageChange.buildWithAdded(result));
-                    }
-
-                    @Override public void onComplete(List result) {
                     }
                 }, true);
             }
@@ -119,9 +114,6 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
                     public Void onRecord(byte[] key, byte[] value) {
                         db.delete(key);
                         return null;
-                    }
-
-                    @Override public void onBatchComplete(List result) {
                     }
 
                     @Override public void onComplete(List result) {

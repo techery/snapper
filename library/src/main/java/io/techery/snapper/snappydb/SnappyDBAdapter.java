@@ -1,7 +1,6 @@
 package io.techery.snapper.snappydb;
 
 import android.util.Base64;
-import android.util.Log;
 
 import com.snappydb.DB;
 import com.snappydb.KeyIterator;
@@ -20,7 +19,7 @@ public class SnappyDBAdapter implements DatabaseAdapter {
 
     public SnappyDBAdapter(DB db, String prefix) {
         this.snappyDB = db;
-        this.prefix = prefix + ":";
+        this.prefix = prefix;
     }
 
     @Override
@@ -38,15 +37,20 @@ public class SnappyDBAdapter implements DatabaseAdapter {
     }
 
     private String getFullKey(byte[] bytes) throws UnsupportedEncodingException {
-        return prefix + Base64.encodeToString(bytes, Base64.NO_WRAP | Base64.NO_PADDING);
+        return new StringBuilder()
+                .append(prefix).append(':')
+                .append(Base64.encodeToString(bytes, Base64.NO_WRAP | Base64.NO_PADDING))
+                .toString();
     }
 
     private byte[] getOriginalKey(String key) {
-        final int keyLength = key.length() - prefix.length();
+        int prefixLength = prefix.length() + 1;
+        final int keyLength = key.length() - prefixLength;
+        byte[] keyBytes = key.getBytes();
         byte originalKey[] = new byte[keyLength];
 
         for (int i = 0; i < keyLength; i++) {
-            originalKey[i] = key.getBytes()[prefix.length() + i];
+            originalKey[i] = keyBytes[prefixLength + i];
         }
 
         return Base64.decode(originalKey, Base64.NO_WRAP | Base64.NO_PADDING);
@@ -62,27 +66,18 @@ public class SnappyDBAdapter implements DatabaseAdapter {
     }
 
     @Override
-    public void enumerate(EnumerationCallback enumerationCallback, boolean withValue) {
+    public <T> void enumerate(EnumerationCallback<T> enumerationCallback, boolean withValue) {
         KeyIterator keyIterator = null;
         try {
-            ArrayList<Object> allRecords = new ArrayList<>();
-            keyIterator = snappyDB.findKeysIterator(this.prefix);
-            for (String[] batch : keyIterator.byBatch(1000)) {
-                ArrayList<Object> batchResults = new ArrayList<>();
-                Log.i("LevelDB", "Load Batch:" + batch.length);
-                for (String key : batch) {
-                    byte[] value;
-                    if (withValue) value = snappyDB.getBytes(key);
-                    else value = null;
-                    Object record = enumerationCallback.onRecord(getOriginalKey(key), value);
-                    if (record != null) batchResults.add(record);
-                }
-                enumerationCallback.onBatchComplete(batchResults);
-                allRecords.addAll(batchResults);
-                batchResults.clear();
+            ArrayList<T> results = new ArrayList<>();
+            for (String key : snappyDB.findKeys(this.prefix)) {
+                byte[] value;
+                if (withValue) value = snappyDB.getBytes(key);
+                else value = null;
+                T record = enumerationCallback.onRecord(getOriginalKey(key), value);
+                if (record != null) results.add(record);
             }
-            Log.i("DatabaseAdapter", "Enumerated " + allRecords.size());
-            enumerationCallback.onComplete(allRecords);
+            enumerationCallback.onComplete(results);
         } catch (SnappydbException e) {
             e.printStackTrace();
         } finally {
