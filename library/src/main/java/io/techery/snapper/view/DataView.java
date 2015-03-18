@@ -14,7 +14,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import io.techery.snapper.dataset.DataSet;
 import io.techery.snapper.dataset.IDataSet;
@@ -31,7 +32,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     private final Comparator<T> comparator;
     private final Comparator<ItemRef<T>> itemComparator;
     private final WeakReference<IDataSet<T>> dataSetRef;
-    private final ReentrantLock lock;
+    private final ReadWriteLock lock;
 
     DataView(final IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
         this.dataSetRef = new WeakReference<>(dataSet);
@@ -39,7 +40,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         this.predicate = predicate;
         this.items = new ArrayList<>();
         this.keys = new HashSet<>();
-        this.lock = new ReentrantLock();
+        this.lock = new ReentrantReadWriteLock();
 
         this.itemComparator = new Comparator<ItemRef<T>>() {
             @Override
@@ -61,11 +62,11 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
                         return DataView.this.predicate.apply(element.getValue());
                     }
                 }).toList();
-                lock.lock();
+                lock.writeLock().lock();
                 keys.addAll(acceptedItems);
                 items.addAll(acceptedItems);
                 Collections.sort(items, itemComparator);
-                lock.unlock();
+                lock.writeLock().unlock();
 
                 didUpdateDataSet(StorageChange.buildWithAdded(items));
 
@@ -85,9 +86,9 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
             parentDataSet.removeListener(DataView.this);
         }
         clearListeners();
-        lock.lock();
+        lock.writeLock().lock();
         items.clear();
-        lock.unlock();
+        lock.writeLock().unlock();
     }
 
     public Builder<T> view() {
@@ -101,15 +102,15 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
     @Override
     public T getItem(int index) {
-        lock.lock();
+        lock.readLock().lock();
         T value = items.get(index).getValue();
-        lock.unlock();
+        lock.readLock().unlock();
         return value;
     }
 
     @Override
     public List<T> toList() {
-        lock.lock();
+        lock.readLock().lock();
         List<T> list = Queryable
                 .from(items)
                 .map(new Converter<ItemRef<T>, T>() {
@@ -118,7 +119,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
                         return element.getValue();
                     }
                 }).toList();
-        lock.unlock();
+        lock.readLock().unlock();
         return list;
     }
 
@@ -141,9 +142,9 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
         for (ItemRef<T> item : added) {
             if (predicate.apply(item.getValue()) && this.keys.add(item)) {
-                lock.lock();
+                lock.writeLock().lock();
                 this.items.add(item);
-                lock.unlock();
+                lock.writeLock().unlock();
                 addedItems.add(item);
             }
         }
@@ -159,9 +160,9 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         List<ItemRef<T>> removedItems = new ArrayList<>();
         for (ItemRef<T> item : removed) {
             if (this.keys.remove(item)) {
-                lock.lock();
+                lock.writeLock().lock();
                 this.items.remove(item);
-                lock.unlock();
+                lock.writeLock().unlock();
                 removedItems.add(item);
             }
         }
@@ -177,27 +178,27 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         for (ItemRef<T> item : updated) {
             if (this.predicate.apply(item.getValue())) {
                 if (this.keys.contains(item)) {
-                    lock.lock();
+                    lock.writeLock().lock();
                     this.items.remove(item);
-                    lock.unlock();
+                    lock.writeLock().unlock();
                     updatedItems.add(item);
                 } else {
                     localAddedItems.add(item);
                 }
-                lock.lock();
+                lock.writeLock().lock();
                 this.items.add(item);
-                lock.unlock();
+                lock.writeLock().unlock();
                 hasNew = true;
             } else if (this.keys.remove(item)) {
-                lock.lock();
+                lock.writeLock().lock();
                 this.items.remove(item);
-                lock.unlock();
+                lock.writeLock().unlock();
                 localRemovedItems.add(item);
             }
         }
-        lock.lock();
+        lock.writeLock().lock();
         if (hasNew) Collections.sort(items, itemComparator);
-        lock.unlock();
+        lock.writeLock().unlock();
 
         Log.d(TAG + ":UPDATE", "finished with new:" + updatedItems.size() + "; overall:" + this.items.size());
         return updatedItems;
