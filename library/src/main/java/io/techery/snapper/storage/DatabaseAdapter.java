@@ -7,15 +7,14 @@ public interface DatabaseAdapter {
 
     void close() throws IOException;
 
-    public interface EnumerationCallback<T> {
-        public T onRecord(byte[] key, byte[] value);
-        public void onBatchComplete(List<T> result);
-        public void onComplete(List<T> result);
-    }
-
     void put(byte[] array, byte[] bytes);
 
     void delete(byte[] array);
 
-    void enumerate(EnumerationCallback enumerationCallback, boolean withValue);
+    <T> void enumerate(EnumerationCallback<T> enumerationCallback, boolean withValue);
+
+    interface EnumerationCallback<T> {
+        T onRecord(byte[] key, byte[] value);
+        void onComplete(List<T> result);
+    }
 }

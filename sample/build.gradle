@@ -8,8 +8,6 @@ android {
         applicationId "com.example.snapper"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -19,9 +17,6 @@ android {
         }
     }
 
-    packagingOptions {
-        exclude 'LICENSE.txt'
-    }
 }
 
 repositories {
@@ -37,6 +32,4 @@ dependencies {
     //
     compile 'com.jakewharton:butterknife:6.1.0'
     compile 'com.jakewharton.timber:timber:2.7.1'
-    //
-    androidTestCompile 'com.android.support.test:testing-support-lib:0.1'
 }
