@@ -48,4 +48,8 @@ public class StorageChange<T> {
     public List<ItemRef<T>> getRemoved() {
         return this.removed;
     }
+
+    public boolean isEmpty() {
+        return added.isEmpty() && updated.isEmpty() && removed.isEmpty();
+    }
 }

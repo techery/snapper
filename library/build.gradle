@@ -19,6 +19,7 @@ android {
 
 repositories {
     jcenter()
+    maven { url "http://dl.bintray.com/kucherenko-alex/android" }
 }
 
 dependencies {
@@ -29,6 +30,7 @@ dependencies {
     compile 'com.esotericsoftware:kryo:3.0.0'
     //
     androidTestCompile 'com.android.support.test:testing-support-lib:0.1'
+    androidTestCompile 'com.artfulbits:meter:1.0.1.141'
 }
 
 // build a jar with source files
