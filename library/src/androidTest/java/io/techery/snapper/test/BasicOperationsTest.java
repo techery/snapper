@@ -19,8 +19,8 @@ import io.techery.snapper.dataset.DataSetMap;
 import io.techery.snapper.dataset.IDataSet.StatusListener;
 import io.techery.snapper.model.User;
 import io.techery.snapper.util.ModelUtil;
-import io.techery.snapper.view.DataViewBuilder;
-import io.techery.snapper.view.IDataView;
+import io.techery.snapper.projection.ProjectionBuilder;
+import io.techery.snapper.projection.IProjection;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verify;
 public class BasicOperationsTest extends BaseTestCase {
 
     DataCollection<User> dataCollection;
-    IDataView<User> filteredDataView;
+    IProjection<User> filteredProjection;
 
     ///////////////////////////////////////////////////////////////////////////
     // Preconditions
@@ -43,7 +43,7 @@ public class BasicOperationsTest extends BaseTestCase {
     @Before
     public void createCollectionAndFilter() {
         dataCollection = db.collection(User.class);
-        filteredDataView = dataCollection.view()
+        filteredProjection = dataCollection.projection()
                 .where(new Predicate<User>() {
                     @Override
                     public boolean apply(User element) {
@@ -79,29 +79,29 @@ public class BasicOperationsTest extends BaseTestCase {
     }
 
     @Test
-    public void buildFilteredDataView() {
+    public void buildFilteredProjection() {
         insertUsers();
-        IDataView<User> filtered = dataCollection.view().where(new Predicate<User>() {
+        IProjection<User> filtered = dataCollection.projection().where(new Predicate<User>() {
             @Override
             public boolean apply(User element) {
                 return element.getUserId().length() > 3;
             }
         }).build();
 
-        assertThat("Filtered DataView should have 2 elements with length > 3", filtered.size(), is(2));
+        assertThat("Filtered Projection should have 2 elements with length > 3", filtered.size(), is(2));
     }
 
     @Test
-    public void buildSortedDataView() {
+    public void buildSortedProjection() {
         insertUsers();
-        IDataView<User> sorted = dataCollection.view().sort(new Comparator<User>() {
+        IProjection<User> sorted = dataCollection.projection().sort(new Comparator<User>() {
             @Override
             public int compare(User o1, User o2) {
                 return o1.getUserId().compareTo(o2.getUserId());
             }
         }).build();
 
-        assertThat("Sorted DataView should have 5 elements", sorted.size(), is(5));
+        assertThat("Sorted Projection should have 5 elements", sorted.size(), is(5));
         assertThat(sorted.getItem(0).getUserId(), equalTo("1"));
         assertThat(sorted.getItem(1).getUserId(), equalTo("10"));
         assertThat(sorted.getItem(2).getUserId(), equalTo("100"));
@@ -114,8 +114,8 @@ public class BasicOperationsTest extends BaseTestCase {
         insertUsers();
         dataCollection.insert(new User("100000"));
 
-        assertThat("Filtered DataView should have 3 elements with length > 3", filteredDataView.size(), is(3));
-        List<String> ids = ModelUtil.extractUserIds(filteredDataView);
+        assertThat("Filtered Projection should have 3 elements with length > 3", filteredProjection.size(), is(3));
+        List<String> ids = ModelUtil.extractUserIds(filteredProjection);
         assertThat(ids, hasItem("1000"));
         assertThat(ids, hasItem("10000"));
         assertThat(ids, hasItem("100000"));
@@ -126,14 +126,14 @@ public class BasicOperationsTest extends BaseTestCase {
         insertUsers();
         dataCollection.remove(new User("1000"));
 
-        assertThat("should have 2 elements", filteredDataView.size(), is(1));
-        assertThat(filteredDataView.getItem(0).getUserId(), equalTo("10000"));
+        assertThat("should have 2 elements", filteredProjection.size(), is(1));
+        assertThat(filteredProjection.getItem(0).getUserId(), equalTo("10000"));
     }
 
     @Test
     public void updateOne() {
         insertUsers();
-        IDataView<User> filtered = dataCollection.view()
+        IProjection<User> filtered = dataCollection.projection()
                 .where(new Predicate<User>() {
                     @Override
                     public boolean apply(User element) {
@@ -150,11 +150,11 @@ public class BasicOperationsTest extends BaseTestCase {
         String userId = "1000";
 
         dataCollection.insert(new User(userId, 10));
-        assertThat("Filtered DataView should have 0 elements with age > 100", filtered.size(), is(0));
+        assertThat("Filtered Projection should have 0 elements with age > 100", filtered.size(), is(0));
 
         dataCollection.insert(new User(userId, 400));
         List<String> ids = ModelUtil.extractUserIds(filtered);
-        assertThat("Filtered DataView should have 1 elements with age > 100", filtered.size(), is(1));
+        assertThat("Filtered Projection should have 1 elements with age > 100", filtered.size(), is(1));
         assertThat(ids, hasItem(userId));
     }
 
@@ -168,7 +168,7 @@ public class BasicOperationsTest extends BaseTestCase {
             }
         });
 
-        IDataView<Integer> dv = new DataViewBuilder<Integer>(dataSetMap).sort(new Comparator<Integer>() {
+        IProjection<Integer> dv = new ProjectionBuilder<Integer>(dataSetMap).sort(new Comparator<Integer>() {
             @Override
             public int compare(Integer o1, Integer o2) {
                 return o1.compareTo(o2);
@@ -195,7 +195,7 @@ public class BasicOperationsTest extends BaseTestCase {
     public void closeAll() {
         db.close();
         assertTrue(dataCollection.isClosed());
-        assertTrue(filteredDataView.isClosed());
+        assertTrue(filteredProjection.isClosed());
     }
 
     @Test
@@ -206,14 +206,14 @@ public class BasicOperationsTest extends BaseTestCase {
     }
 
     @Test
-    public void dataViewAfterClose() {
+    public void projectionAfterClose() {
         StatusListener mockListener = mock(StatusListener.class);
-        filteredDataView.addStatusListener(mockListener);
+        filteredProjection.addStatusListener(mockListener);
         db.close();
         verify(mockListener, only()).onClosed();
         //
         thrown.expect(IllegalStateException.class);
-        filteredDataView.toList();
+        filteredProjection.toList();
     }
 
     ///////////////////////////////////////////////////////////////////////////

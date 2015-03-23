@@ -17,8 +17,8 @@ import io.techery.snapper.storage.Storage;
 import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.util.ListUtils;
 import io.techery.snapper.util.SimpleExecutorService;
-import io.techery.snapper.view.DataViewBuilder;
-import io.techery.snapper.view.IDataView;
+import io.techery.snapper.projection.ProjectionBuilder;
+import io.techery.snapper.projection.IProjection;
 
 public class DataCollection<T extends Indexable> extends DataSet<T> implements Storage.UpdateCallback<T> {
 
@@ -42,8 +42,8 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements S
         return executor.isShutdown();
     }
 
-    public IDataView.Builder<T> view() {
-        return new DataViewBuilder<>(this);
+    public IProjection.Builder<T> projection() {
+        return new ProjectionBuilder<>(this);
     }
 
     public void insert(final T item) {

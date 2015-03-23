@@ -6,32 +6,32 @@ import java.util.List;
 import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.model.User;
 import io.techery.snapper.storage.StorageChange;
-import io.techery.snapper.view.IDataView;
+import io.techery.snapper.projection.IProjection;
 
-public class SpeedDataViewTest extends SpeedTest {
+public class ProjectionSpeedTest extends SpeedTest {
 
-    List<IDataView> views;
+    List<IProjection> projections;
     static final int DATA_VIEW_COUNT = 5;
 
     @Override public void initStorage() {
         super.initStorage();
-        views = new ArrayList<>();
+        projections = new ArrayList<>();
         for (int i = 0; i < DATA_VIEW_COUNT; i++) {
-            IDataView<User> view = userStorage.view().build();
+            IProjection<User> view = userStorage.projection().build();
             view.addDataListener(new IDataSet.DataListener<User>() {
                 @Override public void onDataUpdated(List<User> items, StorageChange<User> change) {
                     if (canMeterChange(change)) METER.beat("View updated with " + change);
                 }
             });
-            views.add(view);
+            projections.add(view);
         }
     }
 
     @Override public void release() {
         super.release();
-        for (IDataView view : views) {
+        for (IProjection view : projections) {
             view.close();
         }
-        views.clear();
+        projections.clear();
     }
 }

@@ -16,17 +16,16 @@ import butterknife.OnClick;
 import io.techery.snapper.DataCollection;
 import io.techery.snapper.DroidSnapper;
 import io.techery.snapper.dataset.IDataSet;
-import io.techery.snapper.listadapter.DataViewListAdapter;
 import io.techery.snapper.model.Indexable;
 import io.techery.snapper.storage.StorageChange;
-import io.techery.snapper.view.IDataView;
+import io.techery.snapper.projection.IProjection;
 
 
 public class MainActivity extends ActionBarActivity {
 
     DataCollection<User> dataCollection;
-    IDataView<User> sortedView;
-    DataViewListAdapter<User> itemsAdapter;
+    IProjection<User> sortedProjection;
+    ProjectionArrayAdapter<User> itemsAdapter;
     volatile int lastId;
 
     static final int BATCH_PUT_COUNT = 10000;
@@ -39,7 +38,7 @@ public class MainActivity extends ActionBarActivity {
 
         dataCollection = DroidSnapper.with(this).collection(User.class);
 
-        sortedView = dataCollection.view().sort(new Comparator<User>() {
+        sortedProjection = dataCollection.projection().sort(new Comparator<User>() {
             @Override
             public int compare(User o1, User o2) {
                 if (o1.id < o2.id) {
@@ -52,7 +51,7 @@ public class MainActivity extends ActionBarActivity {
             }
         }).build();
 
-        sortedView.addDataListener(new IDataSet.DataListener<User>() {
+        sortedProjection.addDataListener(new IDataSet.DataListener<User>() {
             @Override
             public void onDataUpdated(List<User> items, StorageChange<User> change) {
                 if (!items.isEmpty()) {
@@ -63,13 +62,13 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        itemsAdapter = new DataViewListAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, sortedView);
+        itemsAdapter = new ProjectionArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, sortedProjection);
         ListView listView = (ListView) findViewById(R.id.listView);
         listView.setAdapter(itemsAdapter);
     }
 
     @Override protected void onDestroy() {
-        sortedView.close();
+        sortedProjection.close();
         super.onDestroy();
     }
 
@@ -87,8 +86,8 @@ public class MainActivity extends ActionBarActivity {
     }
 
     @OnClick(R.id.filter) void onFilterClick() {
-        if (itemsAdapter.getDataView().equals(sortedView)) {
-            itemsAdapter.setDataView(sortedView.view()
+        if (itemsAdapter.getProjection().equals(sortedProjection)) {
+            itemsAdapter.setProjection(sortedProjection.projecttion()
                             .where(new Predicate<User>() {
                                 @Override
                                 public boolean apply(User element) {
@@ -98,7 +97,7 @@ public class MainActivity extends ActionBarActivity {
                             .build()
             );
         } else {
-            itemsAdapter.setDataView(sortedView);
+            itemsAdapter.setProjection(sortedProjection);
         }
     }
 

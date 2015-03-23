@@ -1,4 +1,4 @@
-package io.techery.snapper.view;
+package io.techery.snapper.projection;
 
 import android.util.Log;
 
@@ -22,9 +22,9 @@ import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.model.ItemRef;
 import io.techery.snapper.storage.StorageChange;
 
-public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.DataListener<T>, IDataSet.StatusListener {
+public class Projection<T> extends DataSet<T> implements IProjection<T>, IDataSet.DataListener<T>, IDataSet.StatusListener {
 
-    public static final String TAG = "DataView";
+    public static final String TAG = "Projection";
 
     private final List<ItemRef<T>> items;
     private final Set<ItemRef<T>> keys;
@@ -35,7 +35,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Da
     private final ReadWriteLock lock;
     private boolean isClosed;
 
-    DataView(final IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
+    Projection(final IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
         this.dataSetRef = new WeakReference<>(dataSet);
         this.comparator = comparator;
         this.predicate = predicate;
@@ -46,7 +46,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Da
         this.itemComparator = new Comparator<ItemRef<T>>() {
             @Override
             public int compare(ItemRef<T> o1, ItemRef<T> o2) {
-                return DataView.this.comparator.compare(o1.getValue(), o2.getValue());
+                return Projection.this.comparator.compare(o1.getValue(), o2.getValue());
             }
         };
 
@@ -60,7 +60,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Da
                 Log.d(TAG, "Initializing");
                 List<ItemRef<T>> acceptedItems = Queryable.from(parentDataSet).where(new Predicate<ItemRef<T>>() {
                     @Override public boolean apply(ItemRef<T> element) {
-                        return DataView.this.predicate.apply(element.getValue());
+                        return Projection.this.predicate.apply(element.getValue());
                     }
                 }).toList();
                 lock.writeLock().lock();
@@ -71,10 +71,10 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Da
 
                 didUpdateDataSet(StorageChange.buildWithAdded(items));
 
-                IDataSet<T> parentDataSet = DataView.this.dataSetRef.get();
+                IDataSet<T> parentDataSet = Projection.this.dataSetRef.get();
                 if (parentDataSet != null) {
-                    parentDataSet.addDataListener(DataView.this);
-                    parentDataSet.addStatusListener(DataView.this);
+                    parentDataSet.addDataListener(Projection.this);
+                    parentDataSet.addStatusListener(Projection.this);
                 }
                 Log.d(TAG, "Initialized with " + items.size() + " elements");
             }
@@ -103,9 +103,9 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Da
         return isClosed;
     }
 
-    public Builder<T> view() {
+    public Builder<T> projecttion() {
         throwIfClosed();
-        return new DataViewBuilder<T>(this).sort(this.comparator);
+        return new ProjectionBuilder<T>(this).sort(this.comparator);
     }
 
     @Override
@@ -240,7 +240,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Da
 
     private void throwIfClosed() {
         if (isClosed) {
-            throw new IllegalStateException("DataView is closed, no further operations permitted");
+            throw new IllegalStateException("Projection is closed, no further operations permitted");
         }
     }
 }
