@@ -67,6 +67,18 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements S
         storage.clear(this);
     }
 
+    @Override public List<T> toList() {
+        return ListUtils.map(storage.items(), new Function1<ItemRef<T>, T>() {
+            @Override public T apply(ItemRef<T> tItemRef) {
+                return tItemRef.getValue();
+            }
+        });
+    }
+
+    @Override public int size() {
+        return storage.items().size();
+    }
+
     @Override
     public Iterator<ItemRef<T>> iterator() {
         return storage.items().iterator();

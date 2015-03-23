@@ -54,9 +54,9 @@ public class MainActivity extends ActionBarActivity {
 
         sortedView.addDataListener(new IDataSet.DataListener<User>() {
             @Override
-            public void onDataUpdated(IDataSet<User> dataSet, StorageChange<User> change) {
-                if (dataSet.iterator().hasNext()) {
-                    lastId = dataSet.iterator().next().getValue().id;
+            public void onDataUpdated(List<User> items, StorageChange<User> change) {
+                if (!items.isEmpty()) {
+                    lastId = items.get(0).id;
                 } else {
                     lastId = 0;
                 }

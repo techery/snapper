@@ -10,16 +10,24 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.techery.snapper.model.ItemRef;
 import io.techery.snapper.storage.StorageChange;
+import io.techery.snapper.util.ListUtils;
 
 public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.DataListener<F> {
 
     private final IDataSet<F> originalDataSet;
     private final Function1<F, T> mapFunction;
+    private final Converter<ItemRef<F>, ItemRef<T>> converter;
     private final List<DataListener<T>> listeners = new CopyOnWriteArrayList<DataListener<T>>();
 
     public DataSetMap(IDataSet<F> originalDataSet, Function1<F, T> mapFunction) {
         this.originalDataSet = originalDataSet;
         this.mapFunction = mapFunction;
+        this.converter = new Converter<ItemRef<F>, ItemRef<T>>() {
+            @Override
+            public ItemRef<T> convert(ItemRef<F> element) {
+                return new ItemRef<T>(element.getKey(), DataSetMap.this.mapFunction.apply(element.getValue()));
+            }
+        };
         this.originalDataSet.addDataListener(this);
     }
 
@@ -53,6 +61,14 @@ public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.DataListener<F> {
         };
     }
 
+    @Override public int size() {
+        return originalDataSet.size();
+    }
+
+    @Override public List<T> toList() {
+        return ListUtils.map(originalDataSet.toList(), mapFunction);
+    }
+
     @Override
     public void addDataListener(final DataListener<T> listener) {
         this.listeners.add(listener);
@@ -79,21 +95,15 @@ public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.DataListener<F> {
     }
 
     @Override
-    public void onDataUpdated(IDataSet<F> dataSet, StorageChange<F> change) {
-        final StorageChange<T> mappedChange = mapChange(change);
+    public void onDataUpdated(List<F> items, StorageChange<F> change) {
+        StorageChange<T> mappedChange = mapChange(change);
+        List<T> mappedItems = ListUtils.map(items, mapFunction);
         for (DataListener<T> listener : listeners) {
-            listener.onDataUpdated(this, mappedChange);
+            listener.onDataUpdated(mappedItems, mappedChange);
         }
     }
 
     private StorageChange<T> mapChange(StorageChange<F> change) {
-        Converter<ItemRef<F>, ItemRef<T>> converter = new Converter<ItemRef<F>, ItemRef<T>>() {
-            @Override
-            public ItemRef<T> convert(ItemRef<F> element) {
-                return new ItemRef<T>(element.getKey(), mapFunction.apply(element.getValue()));
-            }
-        };
-
         List<ItemRef<T>> added = Queryable.from(change.getAdded()).map(converter).toList();
         List<ItemRef<T>> removed = Queryable.from(change.getRemoved()).map(converter).toList();
         List<ItemRef<T>> updated = Queryable.from(change.getUpdated()).map(converter).toList();

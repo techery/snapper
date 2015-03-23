@@ -1,17 +1,27 @@
 package io.techery.snapper.dataset;
 
+import java.util.List;
+
 import io.techery.snapper.model.ItemRef;
 import io.techery.snapper.storage.StorageChange;
 
 public interface IDataSet<T> extends Iterable<ItemRef<T>> {
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Data listener
+    ///////////////////////////////////////////////////////////////////////////
+
     interface DataListener<T> {
-        void onDataUpdated(IDataSet<T> dataSet, StorageChange<T> change);
+        void onDataUpdated(List<T> items, StorageChange<T> change);
     }
 
     void addDataListener(DataListener<T> listener);
 
     void removeDataListener(DataListener<T> listener);
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Status listener
+    ///////////////////////////////////////////////////////////////////////////
 
     interface StatusListener {
         void onClosed();
@@ -25,5 +35,17 @@ public interface IDataSet<T> extends Iterable<ItemRef<T>> {
 
     boolean isClosed();
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Worker
+    ///////////////////////////////////////////////////////////////////////////
+
     void perform(Runnable runnable);
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Collection-like
+    ///////////////////////////////////////////////////////////////////////////
+
+    int size();
+
+    List<T> toList();
 }

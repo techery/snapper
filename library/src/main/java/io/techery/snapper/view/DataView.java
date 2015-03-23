@@ -109,9 +109,11 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Da
     }
 
     @Override
-    public int size() {
-        throwIfClosed();
-        return items.size();
+    public Iterator<ItemRef<T>> iterator() {
+        lock.readLock().lock();
+        Iterator<ItemRef<T>> iterator = Queryable.from(items).toList().iterator();
+        lock.readLock().unlock();
+        return iterator;
     }
 
     @Override
@@ -140,7 +142,16 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Da
     }
 
     @Override
-    public void onDataUpdated(IDataSet<T> dataSet, StorageChange<T> change) {
+    public int size() {
+        throwIfClosed();
+        lock.readLock().lock();
+        int size = items.size();
+        lock.readLock().unlock();
+        return size;
+    }
+
+    @Override
+    public void onDataUpdated(List<T> collection, StorageChange<T> change) {
         didUpdateDataSet(processChange(change));
     }
 
@@ -217,11 +228,6 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Da
 
         Log.d(TAG + ":UPDATE", "finished with new:" + updatedItems.size() + "; overall:" + this.items.size());
         return updatedItems;
-    }
-
-    @Override
-    public Iterator<ItemRef<T>> iterator() {
-        return items.iterator();
     }
 
     @Override

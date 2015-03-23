@@ -18,6 +18,7 @@ public class PersistentStorage<T> implements Storage<T> {
     private final DatabaseAdapter db;
     private final Set<ItemRef<T>> itemsCache = new HashSet<>();
     private final ExecutorService executor;
+    private final Object lock = new Object();
 
     public PersistentStorage(DatabaseAdapter db, ObjectConverter<T> objectConverter, ExecutorService executor) {
         this.db = db;
@@ -46,10 +47,12 @@ public class PersistentStorage<T> implements Storage<T> {
                 List<ItemRef<T>> updated = new ArrayList<>();
                 for (ItemRef<T> itemRef : items) {
                     db.put(itemRef.getKey(), objectConverter.toBytes(itemRef.getValue()));
-                    if (itemsCache.add(itemRef)) {
-                        added.add(itemRef);
-                    } else {
-                        updated.add(itemRef);
+                    synchronized (lock) {
+                        if (itemsCache.add(itemRef)) {
+                            added.add(itemRef);
+                        } else {
+                            updated.add(itemRef);
+                        }
                     }
                 }
                 Log.i("Storage", "Insert:" + added.size());
@@ -71,10 +74,12 @@ public class PersistentStorage<T> implements Storage<T> {
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
-                for (ItemRef<T> itemRef : items) {
-                    db.delete(itemRef.getKey());
+                for (ItemRef<T> item : items) {
+                    db.delete(item.getKey());
+                    synchronized (lock) {
+                        itemsCache.remove(item);
+                    }
                 }
-                itemsCache.removeAll(items);
                 updateCallback.onStorageUpdate(StorageChange.buildWithRemoved(items));
             }
         });
@@ -82,7 +87,11 @@ public class PersistentStorage<T> implements Storage<T> {
 
     @Override
     public Set<ItemRef<T>> items() {
-        return this.itemsCache;
+        HashSet<ItemRef<T>> itemsCopy;
+        synchronized (lock) {
+            itemsCopy = new HashSet<>(itemsCache);
+        }
+        return itemsCopy;
     }
 
     public void load(final UpdateCallback<T> updateCallback) {
@@ -97,7 +106,9 @@ public class PersistentStorage<T> implements Storage<T> {
                     }
 
                     @Override public void onComplete(List<ItemRef<T>> result) {
-                        itemsCache.addAll(result);
+                        synchronized (lock) {
+                            itemsCache.addAll(result);
+                        }
                         updateCallback.onStorageUpdate(StorageChange.buildWithAdded(result));
                     }
                 }, true);
@@ -120,7 +131,9 @@ public class PersistentStorage<T> implements Storage<T> {
 
                     @Override public void onComplete(List result) {
                         StorageChange<T> storageChange = StorageChange.buildWithRemoved(itemsCache);
-                        itemsCache.clear();
+                        synchronized (lock) {
+                            itemsCache.clear();
+                        }
                         updateCallback.onStorageUpdate(storageChange);
                     }
                 }, false);

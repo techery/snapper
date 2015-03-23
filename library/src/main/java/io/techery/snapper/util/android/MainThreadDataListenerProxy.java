@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import java.lang.ref.WeakReference;
+import java.util.List;
 
 import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.storage.StorageChange;
@@ -21,12 +22,12 @@ public class MainThreadDataListenerProxy<T> implements IDataSet.DataListener<T> 
         handler = new Handler(Looper.getMainLooper());
     }
 
-    @Override public void onDataUpdated(final IDataSet<T> dataSet, final StorageChange<T> change) {
+    @Override public void onDataUpdated(final List<T> items, final StorageChange<T> change) {
         handler.post(new Runnable() {
             @Override public void run() {
                 IDataSet.DataListener<T> listener = listenerRef.get();
                 if (listener != null) {
-                    listener.onDataUpdated(dataSet, change);
+                    listener.onDataUpdated(items, change);
                 }
             }
         });
