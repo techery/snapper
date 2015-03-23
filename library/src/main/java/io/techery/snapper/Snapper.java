@@ -31,6 +31,9 @@ public class Snapper {
                 dataCollection = dataCollectionCache.get(className);
                 if (dataCollection == null || dataCollection.isClosed()) {
                     try {
+                        if (dataCollection != null) {
+                            collectionStorageCache.remove(dataCollection);
+                        }
                         Storage<T> storage = storageFactory.createStorage(className);
                         Executor executor = componentFactory.createCollectionExecutor();
                         dataCollection = new DataCollection<>(storage, executor);
