@@ -35,7 +35,7 @@ public class SpeedTest extends BaseTestCase {
     public void initStorage() {
         userStorage = db.collection(User.class);
         userStorage.addDataListener(new IDataSet.DataListener<User>() {
-            @Override public void onDataUpdated(List<User> items, StorageChange<User> change) {
+            @Override public void onDataUpdated(StorageChange<User> change) {
                 if (canMeterChange(change)) METER.beat("Storage updated with " + change);
             }
         });

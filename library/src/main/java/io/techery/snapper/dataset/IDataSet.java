@@ -12,7 +12,7 @@ public interface IDataSet<T> extends Iterable<ItemRef<T>> {
     ///////////////////////////////////////////////////////////////////////////
 
     interface DataListener<T> {
-        void onDataUpdated(List<T> items, StorageChange<T> change);
+        void onDataUpdated(StorageChange<T> change);
     }
 
     void addDataListener(DataListener<T> listener);

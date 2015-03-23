@@ -95,11 +95,10 @@ public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.DataListener<F> {
     }
 
     @Override
-    public void onDataUpdated(List<F> items, StorageChange<F> change) {
+    public void onDataUpdated(StorageChange<F> change) {
         StorageChange<T> mappedChange = mapChange(change);
-        List<T> mappedItems = ListUtils.map(items, mapFunction);
         for (DataListener<T> listener : listeners) {
-            listener.onDataUpdated(mappedItems, mappedChange);
+            listener.onDataUpdated(mappedChange);
         }
     }
 

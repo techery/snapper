@@ -36,8 +36,8 @@ public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.
     }
 
     @Override
-    public void onDataUpdated(List<T> items, StorageChange<T> change) {
-        syncWithDataView(items);
+    public void onDataUpdated(StorageChange<T> change) {
+        syncWithDataView(dataView.toList());
         notifyDataSetChanged();
     }
 
