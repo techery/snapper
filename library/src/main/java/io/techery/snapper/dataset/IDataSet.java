@@ -5,13 +5,25 @@ import io.techery.snapper.storage.StorageChange;
 
 public interface IDataSet<T> extends Iterable<ItemRef<T>> {
 
-    public interface Listener<T> {
-        void onDataSetUpdated(IDataSet<T> dataSet, StorageChange<T> change);
+    interface DataListener<T> {
+        void onDataUpdated(IDataSet<T> dataSet, StorageChange<T> change);
     }
 
-    public void addListener(Listener<T> listener);
+    void addDataListener(DataListener<T> listener);
 
-    public void removeListener(Listener<T> listener);
+    void removeDataListener(DataListener<T> listener);
 
-    public void perform(Runnable runnable);
+    interface StatusListener {
+        void onClosed();
+    }
+
+    void addStatusListener(StatusListener listener);
+
+    void removeStatusListener(StatusListener listener);
+
+    void close();
+
+    boolean isClosed();
+
+    void perform(Runnable runnable);
 }

@@ -18,8 +18,8 @@ public class SpeedDataViewTest extends SpeedTest {
         views = new ArrayList<>();
         for (int i = 0; i < DATA_VIEW_COUNT; i++) {
             IDataView<User> view = userStorage.view().build();
-            view.addListener(new IDataSet.Listener<User>() {
-                @Override public void onDataSetUpdated(IDataSet<User> dataSet, StorageChange<User> change) {
+            view.addDataListener(new IDataSet.DataListener<User>() {
+                @Override public void onDataUpdated(IDataSet<User> dataSet, StorageChange<User> change) {
                     if (canMeterChange(change)) METER.beat("View updated with " + change);
                 }
             });

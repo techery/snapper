@@ -1,7 +1,7 @@
 package io.techery.snapper.snappydb;
 
 import java.io.IOException;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import io.techery.snapper.ComponentFactory;
 import io.techery.snapper.converter.ObjectConverter;
@@ -22,7 +22,7 @@ public class SnappyStorageFactory implements StorageFactory {
     public <T extends Indexable> Storage<T> createStorage(Class<T> className) throws IOException {
         DatabaseAdapter databaseAdapter = this.componentFactory.createDatabase(className.getSimpleName());
         ObjectConverter<T> objectConverter = this.componentFactory.createConverter(className);
-        Executor executor = this.componentFactory.createStorageExecutor();
+        ExecutorService executor = this.componentFactory.createStorageExecutor();
 
         return new PersistentStorage<>(databaseAdapter, objectConverter, executor);
     }

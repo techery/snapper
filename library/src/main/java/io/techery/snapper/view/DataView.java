@@ -22,7 +22,7 @@ import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.model.ItemRef;
 import io.techery.snapper.storage.StorageChange;
 
-public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Listener<T> {
+public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.DataListener<T>, IDataSet.StatusListener {
 
     public static final String TAG = "DataView";
 
@@ -33,6 +33,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     private final Comparator<ItemRef<T>> itemComparator;
     private final WeakReference<IDataSet<T>> dataSetRef;
     private final ReadWriteLock lock;
+    private boolean isClosed;
 
     DataView(final IDataSet<T> dataSet, Predicate<T> predicate, Comparator<T> comparator) {
         this.dataSetRef = new WeakReference<>(dataSet);
@@ -72,36 +73,50 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
                 IDataSet<T> parentDataSet = DataView.this.dataSetRef.get();
                 if (parentDataSet != null) {
-                    parentDataSet.addListener(DataView.this);
+                    parentDataSet.addDataListener(DataView.this);
+                    parentDataSet.addStatusListener(DataView.this);
                 }
                 Log.d(TAG, "Initialized with " + items.size() + " elements");
             }
         });
     }
 
+    @Override public void onClosed() {
+        close();
+    }
+
     @Override
     public void close() {
-        IDataSet<T> parentDataSet = DataView.this.dataSetRef.get();
+        isClosed = true;
+        IDataSet<T> parentDataSet = dataSetRef.get();
         if (parentDataSet != null) {
-            parentDataSet.removeListener(DataView.this);
+            parentDataSet.removeDataListener(this);
+            parentDataSet.removeStatusListener(this);
         }
-        clearListeners();
+        didClose();
         lock.writeLock().lock();
         items.clear();
         lock.writeLock().unlock();
     }
 
+    @Override public boolean isClosed() {
+        return isClosed;
+    }
+
     public Builder<T> view() {
+        throwIfClosed();
         return new DataViewBuilder<T>(this).sort(this.comparator);
     }
 
     @Override
     public int size() {
+        throwIfClosed();
         return items.size();
     }
 
     @Override
     public T getItem(int index) {
+        throwIfClosed();
         lock.readLock().lock();
         T value = items.get(index).getValue();
         lock.readLock().unlock();
@@ -110,6 +125,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
     @Override
     public List<T> toList() {
+        throwIfClosed();
         lock.readLock().lock();
         List<T> list = Queryable
                 .from(items)
@@ -124,7 +140,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
     }
 
     @Override
-    public void onDataSetUpdated(IDataSet<T> dataSet, StorageChange<T> change) {
+    public void onDataUpdated(IDataSet<T> dataSet, StorageChange<T> change) {
         didUpdateDataSet(processChange(change));
     }
 
@@ -156,7 +172,6 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
 
     private List<ItemRef<T>> processRemovedItems(List<ItemRef<T>> removed) {
         Log.d(TAG + ":REMOVE", "started with size " + removed.size());
-        long start = System.currentTimeMillis();
         List<ItemRef<T>> removedItems = new ArrayList<>();
         for (ItemRef<T> item : removed) {
             if (this.keys.remove(item)) {
@@ -217,4 +232,9 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Li
         }
     }
 
+    private void throwIfClosed() {
+        if (isClosed) {
+            throw new IllegalStateException("DataView is closed, no further operations permitted");
+        }
+    }
 }

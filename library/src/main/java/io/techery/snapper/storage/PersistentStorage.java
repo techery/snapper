@@ -2,26 +2,24 @@ package io.techery.snapper.storage;
 
 import android.util.Log;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import io.techery.snapper.converter.ObjectConverter;
 import io.techery.snapper.model.ItemRef;
 
-public class PersistentStorage<T> implements Storage<T>, Closeable {
+public class PersistentStorage<T> implements Storage<T> {
 
     private final ObjectConverter<T> objectConverter;
     private final DatabaseAdapter db;
     private final Set<ItemRef<T>> itemsCache = new HashSet<>();
-    private final Executor executor;
+    private final ExecutorService executor;
 
-    public PersistentStorage(DatabaseAdapter db, ObjectConverter<T> objectConverter, Executor executor) {
+    public PersistentStorage(DatabaseAdapter db, ObjectConverter<T> objectConverter, ExecutorService executor) {
         this.db = db;
         this.objectConverter = objectConverter;
         this.executor = executor;
@@ -29,8 +27,8 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
 
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();
         close();
+        super.finalize();
     }
 
     @Override
@@ -40,6 +38,7 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
 
     @Override
     public void putAll(final List<ItemRef<T>> items, final UpdateCallback<T> updateCallback) {
+        throwIfClosed();
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -68,6 +67,7 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
 
     @Override
     public void removeAll(final List<ItemRef<T>> items, final UpdateCallback<T> updateCallback) {
+        throwIfClosed();
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -86,6 +86,7 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
     }
 
     public void load(final UpdateCallback<T> updateCallback) {
+        throwIfClosed();
         executor.execute(new Runnable() {
             @Override public void run() {
                 PersistentStorage.this.db.enumerate(new DatabaseAdapter.EnumerationCallback<ItemRef<T>>() {
@@ -106,6 +107,7 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
 
     @Override
     public void clear(final UpdateCallback<T> updateCallback) {
+        throwIfClosed();
         this.executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -128,15 +130,18 @@ public class PersistentStorage<T> implements Storage<T>, Closeable {
     }
 
     @Override
-    public void close() throws IOException {
-        if (this.db != null) {
-            try {
-                this.db.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-
+    public void close() {
+        executor.execute(new Runnable() {
+            @Override public void run() {
+                executor.shutdownNow();
+                itemsCache.clear();
             }
+        });
+    }
+
+    private void throwIfClosed() {
+        if (executor.isShutdown()) {
+            throw new IllegalStateException("Storage is closed, no further operations permitted");
         }
     }
 }

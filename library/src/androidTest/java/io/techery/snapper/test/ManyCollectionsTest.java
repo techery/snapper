@@ -5,7 +5,6 @@ import android.support.test.runner.AndroidJUnit4;
 import com.innahema.collections.query.functions.Predicate;
 import com.innahema.collections.query.queriables.Queryable;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +18,9 @@ import io.techery.snapper.model.Company;
 import io.techery.snapper.model.User;
 import io.techery.snapper.view.IDataView;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.matchers.JUnitMatchers.hasItem;
 
 @RunWith(AndroidJUnit4.class)
@@ -46,8 +47,8 @@ public class ManyCollectionsTest extends BaseTestCase {
     }
 
     @After public void releaseCollection() throws Exception {
-        userStorage.clear();
-        companyStorage.clear();
+        if (!userStorage.isClosed()) userStorage.clear();
+        if (!companyStorage.isClosed()) companyStorage.clear();
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -55,8 +56,8 @@ public class ManyCollectionsTest extends BaseTestCase {
     ///////////////////////////////////////////////////////////////////////////
 
     @Test public void storageConsistency() {
-        assertThat(userStorage.view().build().toList().size(), CoreMatchers.is(5));
-        assertThat(companyStorage.view().build().toList().size(), CoreMatchers.is(2));
+        assertThat(userStorage.view().build().toList().size(), is(5));
+        assertThat(companyStorage.view().build().toList().size(), is(2));
     }
 
     @Test public void modelEqualityFromDiffStorages() {
@@ -73,6 +74,12 @@ public class ManyCollectionsTest extends BaseTestCase {
         Company company = Queryable.from(smallCoView.toList()).first();
         User user = Queryable.from(smallCoUserView.toList()).first();
         assertThat(company.getUsers(), hasItem(user));
+    }
+
+    @Test public void closeAll() {
+        db.close();
+        assertTrue(userStorage.isClosed());
+        assertTrue(companyStorage.isClosed());
     }
 
 }
