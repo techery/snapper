@@ -151,7 +151,7 @@ public class DataView<T> extends DataSet<T> implements IDataView<T>, IDataSet.Da
     }
 
     @Override
-    public void onDataUpdated(StorageChange<T> change) {
+    public void onDataUpdated(List<T> collection, StorageChange<T> change) {
         didUpdateDataSet(processChange(change));
     }
 
