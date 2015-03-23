@@ -24,11 +24,11 @@ repositories {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
     compile('com.snappydb:snappydb-lib:0.5.0') {
         exclude group: 'com.esotericsoftware.kryo', module: 'kryo'
     }
     compile 'com.esotericsoftware:kryo:3.0.0'
+    compile 'com.innahema:collections-query:0.2.9'
     //
     androidTestCompile 'com.android.support.test:testing-support-lib:0.1'
     androidTestCompile 'org.mockito:mockito-core:2.0.5-beta'

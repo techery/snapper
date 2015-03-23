@@ -16,7 +16,7 @@ import io.techery.snapper.BaseTestCase;
 import io.techery.snapper.DataCollection;
 import io.techery.snapper.model.Company;
 import io.techery.snapper.model.User;
-import io.techery.snapper.view.IDataView;
+import io.techery.snapper.projection.IProjection;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -56,17 +56,17 @@ public class ManyCollectionsTest extends BaseTestCase {
     ///////////////////////////////////////////////////////////////////////////
 
     @Test public void storageConsistency() {
-        assertThat(userStorage.view().build().toList().size(), is(5));
-        assertThat(companyStorage.view().build().toList().size(), is(2));
+        assertThat(userStorage.projection().build().toList().size(), is(5));
+        assertThat(companyStorage.projection().build().toList().size(), is(2));
     }
 
     @Test public void modelEqualityFromDiffStorages() {
-        IDataView<Company> smallCoView = companyStorage.view().where(new Predicate<Company>() {
+        IProjection<Company> smallCoView = companyStorage.projection().where(new Predicate<Company>() {
             @Override public boolean apply(Company element) {
                 return element.getName().contains("SmallCo");
             }
         }).build();
-        IDataView<User> smallCoUserView = userStorage.view().where(new Predicate<User>() {
+        IProjection<User> smallCoUserView = userStorage.projection().where(new Predicate<User>() {
             @Override public boolean apply(User element) {
                 return element.getUserId().equals("1");
             }
