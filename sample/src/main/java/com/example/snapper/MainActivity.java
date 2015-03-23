@@ -52,9 +52,9 @@ public class MainActivity extends ActionBarActivity {
             }
         }).build();
 
-        sortedView.addListener(new IDataSet.Listener<User>() {
+        sortedView.addDataListener(new IDataSet.DataListener<User>() {
             @Override
-            public void onDataSetUpdated(IDataSet<User> dataSet, StorageChange<User> change) {
+            public void onDataUpdated(IDataSet<User> dataSet, StorageChange<User> change) {
                 if (dataSet.iterator().hasNext()) {
                     lastId = dataSet.iterator().next().getValue().id;
                 } else {

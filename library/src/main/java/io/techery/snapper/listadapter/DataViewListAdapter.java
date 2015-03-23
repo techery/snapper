@@ -8,10 +8,10 @@ import java.util.List;
 
 import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.storage.StorageChange;
-import io.techery.snapper.util.android.MainThreadListenerProxy;
+import io.techery.snapper.util.android.MainThreadDataListenerProxy;
 import io.techery.snapper.view.IDataView;
 
-public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.Listener<T> {
+public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.DataListener<T> {
 
     static final String TAG = DataViewListAdapter.class.getSimpleName();
 
@@ -28,15 +28,15 @@ public class DataViewListAdapter<T> extends ArrayAdapter<T> implements IDataSet.
 
     public void setDataView(IDataView<T> dataView) {
         if (this.dataView != null) {
-            this.dataView.removeListener(this);
+            this.dataView.removeDataListener(this);
         }
 
         this.dataView = dataView;
-        this.dataView.addListener(new MainThreadListenerProxy<T>(this));
+        this.dataView.addDataListener(new MainThreadDataListenerProxy<T>(this));
     }
 
     @Override
-    public void onDataSetUpdated(final IDataSet<T> dataSet, StorageChange<T> change) {
+    public void onDataUpdated(final IDataSet<T> dataSet, StorageChange<T> change) {
         syncWithDataView();
         notifyDataSetChanged();
     }

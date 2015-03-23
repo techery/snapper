@@ -7,7 +7,7 @@ import io.techery.snapper.model.ItemRef;
 
 public interface Storage<T> {
 
-    public interface UpdateCallback<T> {
+    interface UpdateCallback<T> {
         void onStorageUpdate(StorageChange<T> storageChange);
     }
 
@@ -22,4 +22,6 @@ public interface Storage<T> {
     Set<ItemRef<T>> items();
 
     void clear(UpdateCallback<T> updateCallback);
+    
+    void close();
 }

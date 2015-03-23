@@ -7,16 +7,17 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import io.techery.snapper.snappydb.SnappyComponentFactory;
 import io.techery.snapper.storage.DatabaseFactory;
+import io.techery.snapper.util.SimpleExecutorService;
 
 @RunWith(AndroidJUnit4.class)
 public class BaseTestCase {
 
     protected Snapper db;
-    protected Executor executor = new Executor() {
+    protected ExecutorService executor = new SimpleExecutorService() {
         @Override public void execute(Runnable command) {
             command.run();
         }
@@ -31,11 +32,11 @@ public class BaseTestCase {
         DatabaseFactory databaseFactory = snapperBuilder.useDefaultDatabaseFactory("snappydb_test");
         db = snapperBuilder.componentFactory(new SnappyComponentFactory(databaseFactory) {
 
-            @Override public Executor createStorageExecutor() {
+            @Override public ExecutorService createStorageExecutor() {
                 return executor;
             }
 
-            @Override public Executor createCollectionExecutor() {
+            @Override public ExecutorService createCollectionExecutor() {
                 return executor;
             }
         }).build();
