@@ -10,6 +10,7 @@ import io.techery.snapper.converter.ObjectConverter;
 import io.techery.snapper.model.Indexable;
 import io.techery.snapper.storage.DatabaseAdapter;
 import io.techery.snapper.storage.DatabaseFactory;
+import io.techery.snapper.util.SnapperThreadFactory;
 
 public abstract class SnappyComponentFactory implements ComponentFactory {
 
@@ -31,8 +32,8 @@ public abstract class SnappyComponentFactory implements ComponentFactory {
 
     public static class DefaultSnappyComponentFactory extends SnappyComponentFactory {
 
-        private final ExecutorService storageExecutor = Executors.newSingleThreadExecutor();
-        private final ExecutorService collectionExecutor = Executors.newFixedThreadPool(4);
+        private final ExecutorService storageExecutor = Executors.newSingleThreadExecutor(new SnapperThreadFactory("storage"));
+        private final ExecutorService collectionExecutor = Executors.newFixedThreadPool(4, new SnapperThreadFactory("collection"));
 
         public DefaultSnappyComponentFactory(DatabaseFactory snappyDBFactory) {
             super(snappyDBFactory);
