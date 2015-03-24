@@ -177,7 +177,9 @@ public class Projection<T> extends DataSet<T> implements IProjection<T>, IDataSe
                 addedItems.add(item);
             }
         }
+        lock.writeLock().lock();
         Collections.sort(items, itemComparator);
+        lock.writeLock().unlock();
 
         Log.d(TAG + ":ADD", "finished with new:" + addedItems.size() + "; overall:" + this.items.size());
         return addedItems;
