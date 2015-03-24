@@ -13,7 +13,7 @@ public class Snapper {
 
     private final StorageFactory storageFactory;
     private final ComponentFactory componentFactory;
-    private final Map<Class<? extends Indexable>, DataCollection> dataCollectionCache;
+    private final Map<String, DataCollection> dataCollectionCache;
     private final Map<DataCollection, Storage> collectionStorageCache;
 
     public Snapper(StorageFactory storageFactory, ComponentFactory componentFactory) {
@@ -24,21 +24,27 @@ public class Snapper {
     }
 
     public <T extends Indexable> DataCollection<T> collection(Class<T> className) {
-        DataCollection<T> dataCollection = dataCollectionCache.get(className);
+        return collection(className, null);
+    }
+
+    public <T extends Indexable> DataCollection<T> collection(Class<T> className, String prefix) {
+        String storageName = storageFactory.buildStorageName(className, prefix);
+        //
+        DataCollection<T> dataCollection = dataCollectionCache.get(storageName);
         if (dataCollection == null || dataCollection.isClosed()) {
             // Double check not to create duplicates from sep. threads
             synchronized (Snapper.class) {
-                dataCollection = dataCollectionCache.get(className);
+                dataCollection = dataCollectionCache.get(storageName);
                 if (dataCollection == null || dataCollection.isClosed()) {
                     try {
                         if (dataCollection != null) {
                             collectionStorageCache.remove(dataCollection);
                         }
-                        Storage<T> storage = storageFactory.createStorage(className);
+                        Storage<T> storage = storageFactory.createStorage(className, prefix);
                         Executor executor = componentFactory.createCollectionExecutor();
                         dataCollection = new DataCollection<>(storage, executor);
                         //
-                        dataCollectionCache.put(className, dataCollection);
+                        dataCollectionCache.put(storageName, dataCollection);
                         collectionStorageCache.put(dataCollection, storage);
                     } catch (IOException e) {
                         e.printStackTrace();

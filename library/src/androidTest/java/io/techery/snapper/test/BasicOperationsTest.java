@@ -71,6 +71,16 @@ public class BasicOperationsTest extends BaseTestCase {
     ///////////////////////////////////////////////////////////////////////////
 
     @Test
+    public void oneModelManyCollections() {
+        dataCollection = db.collection(User.class);
+        insertUsers();
+        assertThat(dataCollection.size(), is(5));
+
+        dataCollection = db.collection(User.class, "guest");
+        assertThat(dataCollection.size(), is(0));
+    }
+
+    @Test
     public void loadCollection() {
         dataCollection.insertAll(ModelUtil.generateUsers(1000));
         dataCollection.close();

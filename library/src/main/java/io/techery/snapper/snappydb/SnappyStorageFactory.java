@@ -1,5 +1,7 @@
 package io.techery.snapper.snappydb;
 
+import android.text.TextUtils;
+
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
@@ -19,11 +21,20 @@ public class SnappyStorageFactory implements StorageFactory {
     }
 
     @Override
-    public <T extends Indexable> Storage<T> createStorage(Class<T> className) throws IOException {
-        DatabaseAdapter databaseAdapter = this.componentFactory.createDatabase(className.getSimpleName());
+    public <T extends Indexable> Storage<T> createStorage(Class<T> className, String prefix) throws IOException {
+        String storageName = buildStorageName(className, prefix);
+        DatabaseAdapter databaseAdapter = this.componentFactory.createDatabase(storageName);
         ObjectConverter<T> objectConverter = this.componentFactory.createConverter(className);
         ExecutorService executor = this.componentFactory.createStorageExecutor();
 
         return new PersistentStorage<>(databaseAdapter, objectConverter, executor);
+    }
+
+    @Override public <T extends Indexable> String buildStorageName(Class<T> className, String prefix) {
+        StringBuilder databaseName = new StringBuilder(className.getSimpleName());
+        if (!TextUtils.isEmpty(prefix)) {
+            databaseName.append('_').append(prefix);
+        }
+        return databaseName.toString();
     }
 }
