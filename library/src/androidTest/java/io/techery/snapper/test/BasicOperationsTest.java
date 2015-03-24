@@ -1,5 +1,7 @@
 package io.techery.snapper.test;
 
+import android.support.test.runner.AndroidJUnit4;
+
 import com.innahema.collections.query.functions.Function1;
 import com.innahema.collections.query.functions.Predicate;
 import com.innahema.collections.query.queriables.Queryable;
@@ -9,11 +11,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 
 import java.util.Comparator;
 import java.util.List;
 
-import io.techery.snapper.BaseTestCase;
+import io.techery.snapper.BaseSyncTestCase;
 import io.techery.snapper.DataCollection;
 import io.techery.snapper.dataset.DataSetMap;
 import io.techery.snapper.dataset.IDataSet.StatusListener;
@@ -31,7 +34,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
 
-public class BasicOperationsTest extends BaseTestCase {
+@RunWith(AndroidJUnit4.class)
+public class BasicOperationsTest extends BaseSyncTestCase {
 
     DataCollection<User> dataCollection;
     IProjection<User> filteredProjection;

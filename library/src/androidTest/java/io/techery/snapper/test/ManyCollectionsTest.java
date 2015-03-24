@@ -12,7 +12,7 @@ import org.junit.runner.RunWith;
 
 import java.util.Collections;
 
-import io.techery.snapper.BaseTestCase;
+import io.techery.snapper.BaseSyncTestCase;
 import io.techery.snapper.DataCollection;
 import io.techery.snapper.model.Company;
 import io.techery.snapper.model.User;
@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.matchers.JUnitMatchers.hasItem;
 
 @RunWith(AndroidJUnit4.class)
-public class ManyCollectionsTest extends BaseTestCase {
+public class ManyCollectionsTest extends BaseSyncTestCase {
 
     DataCollection<User> userStorage;
     DataCollection<Company> companyStorage;
