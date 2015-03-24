@@ -1,10 +1,13 @@
 package io.techery.snapper.test.benchmark;
 
+import android.support.test.runner.AndroidJUnit4;
+
 import com.artfulbits.benchmark.Meter;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 
@@ -16,6 +19,7 @@ import io.techery.snapper.model.User;
 import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.util.ModelUtil;
 
+@RunWith(AndroidJUnit4.class)
 public class PerformanceTest extends BaseAsyncTestCase {
 
     DataCollection<User> userStorage;

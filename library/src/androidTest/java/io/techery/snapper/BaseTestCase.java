@@ -2,10 +2,8 @@ package io.techery.snapper;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
-import org.junit.runner.RunWith;
 
 import java.util.concurrent.ExecutorService;
 
@@ -14,7 +12,6 @@ import io.techery.snapper.snappydb.SnappyComponentFactory;
 import io.techery.snapper.storage.DatabaseFactory;
 import timber.log.Timber;
 
-@RunWith(AndroidJUnit4.class)
 public abstract class BaseTestCase {
 
     protected Snapper db;

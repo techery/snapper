@@ -1,11 +1,14 @@
 package io.techery.snapper.test;
 
+import android.support.test.runner.AndroidJUnit4;
+
 import com.innahema.collections.query.functions.Predicate;
 import com.innahema.collections.query.queriables.Queryable;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Collections;
 
@@ -20,6 +23,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.matchers.JUnitMatchers.hasItem;
 
+@RunWith(AndroidJUnit4.class)
 public class ManyCollectionsTest extends BaseSyncTestCase {
 
     DataCollection<User> userStorage;

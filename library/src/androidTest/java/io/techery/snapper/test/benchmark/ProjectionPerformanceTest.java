@@ -1,11 +1,16 @@
 package io.techery.snapper.test.benchmark;
 
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import io.techery.snapper.model.User;
 import io.techery.snapper.projection.IProjection;
 
+@RunWith(AndroidJUnit4.class)
 public class ProjectionPerformanceTest extends PerformanceTest {
 
     List<IProjection> projections;
