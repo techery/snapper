@@ -13,7 +13,7 @@ import org.junit.rules.ExpectedException;
 import java.util.Comparator;
 import java.util.List;
 
-import io.techery.snapper.BaseTestCase;
+import io.techery.snapper.BaseSyncTestCase;
 import io.techery.snapper.DataCollection;
 import io.techery.snapper.dataset.DataSetMap;
 import io.techery.snapper.dataset.IDataSet.StatusListener;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
 
-public class BasicOperationsTest extends BaseTestCase {
+public class BasicOperationsTest extends BaseSyncTestCase {
 
     DataCollection<User> dataCollection;
     IProjection<User> filteredProjection;

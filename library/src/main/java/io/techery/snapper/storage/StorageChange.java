@@ -52,4 +52,12 @@ public class StorageChange<T> {
     public boolean isEmpty() {
         return added.isEmpty() && updated.isEmpty() && removed.isEmpty();
     }
+
+    @Override public String toString() {
+        return "StorageChange{" +
+                "added=" + added.size() +
+                ", updated=" + updated.size() +
+                ", removed=" + removed.size() +
+                '}';
+    }
 }

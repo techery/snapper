@@ -1,18 +1,15 @@
 package io.techery.snapper.test;
 
-import android.support.test.runner.AndroidJUnit4;
-
 import com.innahema.collections.query.functions.Predicate;
 import com.innahema.collections.query.queriables.Queryable;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.Collections;
 
-import io.techery.snapper.BaseTestCase;
+import io.techery.snapper.BaseSyncTestCase;
 import io.techery.snapper.DataCollection;
 import io.techery.snapper.model.Company;
 import io.techery.snapper.model.User;
@@ -23,8 +20,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.matchers.JUnitMatchers.hasItem;
 
-@RunWith(AndroidJUnit4.class)
-public class ManyCollectionsTest extends BaseTestCase {
+public class ManyCollectionsTest extends BaseSyncTestCase {
 
     DataCollection<User> userStorage;
     DataCollection<Company> companyStorage;
