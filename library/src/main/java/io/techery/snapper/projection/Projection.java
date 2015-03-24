@@ -93,7 +93,9 @@ public class Projection<T> extends DataSet<T> implements IProjection<T>, IDataSe
             parentDataSet.removeDataListener(this);
             parentDataSet.removeStatusListener(this);
         }
+        clearDataListeners();
         didClose();
+        clearStatusListeners();
         lock.writeLock().lock();
         items.clear();
         lock.writeLock().unlock();

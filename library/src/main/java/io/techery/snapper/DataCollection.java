@@ -34,7 +34,9 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements S
     @Override
     public void close() {
         executor.shutdown();
+        clearDataListeners();
         didClose();
+        clearStatusListeners();
     }
 
     @Override

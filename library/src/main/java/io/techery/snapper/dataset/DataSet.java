@@ -29,7 +29,12 @@ public abstract class DataSet<T> implements IDataSet<T> {
         dataListeners.remove(listener);
     }
 
+    protected void clearDataListeners() {
+        dataListeners.clear();
+    }
+
     protected void didUpdateDataSet(final StorageChange<T> change) {
+        if (isClosed()) return;
         List<T> items = toList();
         for (DataListener<T> listener : dataListeners) {
             listener.onDataUpdated(items, change);
@@ -47,7 +52,11 @@ public abstract class DataSet<T> implements IDataSet<T> {
     }
 
     @Override public void removeStatusListener(StatusListener listener) {
+        statusListeners.remove(listener);
+    }
 
+    protected void clearStatusListeners() {
+        statusListeners.clear();
     }
 
     protected void didClose() {
