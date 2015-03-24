@@ -25,7 +25,7 @@ public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.DataListener<F> {
         this.converter = new Converter<ItemRef<F>, ItemRef<T>>() {
             @Override
             public ItemRef<T> convert(ItemRef<F> element) {
-                return new ItemRef<T>(element.getKey(), DataSetMap.this.mapFunction.apply(element.getValue()));
+                return element.withValue(DataSetMap.this.mapFunction.apply(element.getValue()));
             }
         };
         this.originalDataSet.addDataListener(this);
@@ -51,12 +51,12 @@ public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.DataListener<F> {
             @Override
             public ItemRef<T> next() {
                 final ItemRef<F> itemRef = iterator.next();
-                return new ItemRef<>(itemRef.getKey(), mapFunction.apply(itemRef.getValue()));
+                return itemRef.withValue(mapFunction.apply(itemRef.getValue()));
             }
 
             @Override
             public void remove() {
-
+                throw new UnsupportedOperationException();
             }
         };
     }

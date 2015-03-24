@@ -8,7 +8,7 @@ import io.techery.snapper.dataset.IDataSet;
 
 public interface IProjection<T> extends IDataSet<T> {
 
-    Builder<T> projecttion();
+    Builder<T> projection();
     T getItem(int index);
 
     interface Builder<T> {

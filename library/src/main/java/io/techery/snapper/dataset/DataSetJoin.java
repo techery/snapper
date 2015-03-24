@@ -90,7 +90,7 @@ public class DataSetJoin<A, B, OUT> implements IDataSet<OUT> {
             public ItemRef<OUT> next() {
                 ItemRef<A> itemRef = iterator.next();
                 OUT value = convert(itemRef, cache.get(itemRef.getValue()));
-                return new ItemRef<>(itemRef.getKey(), value);
+                return itemRef.withValue(value);
             }
 
             @Override

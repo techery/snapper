@@ -105,7 +105,7 @@ public class Projection<T> extends DataSet<T> implements IProjection<T>, IDataSe
         return isClosed;
     }
 
-    public Builder<T> projecttion() {
+    public Builder<T> projection() {
         throwIfClosed();
         return new ProjectionBuilder<T>(this).sort(this.comparator);
     }
@@ -154,10 +154,13 @@ public class Projection<T> extends DataSet<T> implements IProjection<T>, IDataSe
 
     @Override
     public void onDataUpdated(List<T> collection, StorageChange<T> change) {
-        didUpdateDataSet(processChange(change));
+        StorageChange<T> storageChange = processChange(change);
+        if (!storageChange.isEmpty()) didUpdateDataSet(storageChange);
     }
 
     private StorageChange<T> processChange(StorageChange<T> change) {
+        if (change.isEmpty()) return StorageChange.empty();
+
         List<ItemRef<T>> addedItems = processAddedItems(change.getAdded());
         List<ItemRef<T>> removedItems = processRemovedItems(change.getRemoved());
         List<ItemRef<T>> updatedItems = processUpdatedItems(change.getUpdated(), addedItems, removedItems);
