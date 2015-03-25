@@ -11,6 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import io.techery.snapper.model.ItemRef;
 import io.techery.snapper.storage.StorageChange;
@@ -22,6 +24,7 @@ public class DataSetJoin<A, B, OUT> implements IDataSet<OUT> {
     private final Function2<A, B, Boolean> joinFunction;
     private final Function2<A, List<B>, OUT> mapFunction;
     private final Map<ItemRef<A>, List<B>> cache = new LinkedHashMap<>();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final List<DataListener<OUT>> listeners = new CopyOnWriteArrayList<DataListener<OUT>>();
 
@@ -42,16 +45,19 @@ public class DataSetJoin<A, B, OUT> implements IDataSet<OUT> {
                 ArrayList<ItemRef<OUT>> added = new ArrayList<>();
                 //
                 Iterator<ItemRef<A>> iterator = DataSetJoin.this.originalDataSet1.iterator();
+                List<B> joinCandidates = DataSetJoin.this.originalDataSet2.toList();
                 while (iterator.hasNext()) {
                     final ItemRef<A> a = iterator.next();
                     List<B> join = Queryable
-                            .from(DataSetJoin.this.originalDataSet2.toList())
+                            .from(joinCandidates)
                             .where(new Predicate<B>() {
                                 @Override public boolean apply(B element) {
                                     return DataSetJoin.this.joinFunction.apply(a.getValue(), element);
                                 }
                             }).toList();
+                    lock.writeLock().lock();
                     cache.put(a, join);
+                    lock.writeLock().unlock();
                     OUT value = convert(a, join);
                     items.add(value);
                     added.add(a.withValue(value));
@@ -89,7 +95,10 @@ public class DataSetJoin<A, B, OUT> implements IDataSet<OUT> {
             @Override
             public ItemRef<OUT> next() {
                 ItemRef<A> itemRef = iterator.next();
-                OUT value = convert(itemRef, cache.get(itemRef.getValue()));
+                OUT value;
+                lock.readLock().lock();
+                value = convert(itemRef, cache.get(itemRef.getValue()));
+                lock.readLock().unlock();
                 return itemRef.withValue(value);
             }
 
@@ -101,17 +110,22 @@ public class DataSetJoin<A, B, OUT> implements IDataSet<OUT> {
     }
 
     @Override public int size() {
-        return cache.size();
+        lock.readLock().lock();
+        int size = cache.size();
+        lock.readLock().unlock();
+        return size;
     }
 
     @Override public List<OUT> toList() {
-        // TODO lock for safety
-        List<OUT> list = Queryable.from(cache.keySet())
-                .map(new Converter<ItemRef<A>, OUT>() {
-                    @Override public OUT convert(ItemRef<A> element) {
-                        return mapFunction.apply(element.getValue(), cache.get(element));
-                    }
-                }).toList();
+        List<OUT> list;
+        lock.readLock().lock();
+            list = Queryable.from(cache.keySet())
+                    .map(new Converter<ItemRef<A>, OUT>() {
+                        @Override public OUT convert(ItemRef<A> element) {
+                            return mapFunction.apply(element.getValue(), cache.get(element));
+                        }
+                    }).toList();
+        lock.readLock().unlock();
         return list;
     }
 
@@ -176,19 +190,27 @@ public class DataSetJoin<A, B, OUT> implements IDataSet<OUT> {
             //
             for (ItemRef<A> itemRef : change.getAdded()) {
                 join = findJoinCandidates(itemRef.getValue(), joinCandidates);
+                lock.writeLock().lock();
                 cache.put(itemRef, join);
+                lock.writeLock().unlock();
                 added.add(itemRef.withValue(convert(itemRef, join)));
             }
             for (ItemRef<A> itemRef : change.getRemoved()) {
+                lock.writeLock().lock();
                 join = cache.remove(itemRef);
+                lock.writeLock().unlock();
                 if (join != null) {
                     removed.add(itemRef.withValue(convert(itemRef, join)));
                 }
             }
             for (ItemRef<A> itemRef : change.getUpdated()) {
+                lock.readLock().lock();
                 join = cache.get(itemRef);
+                lock.readLock().unlock();
                 if (join != null) {
+                    lock.writeLock().lock();
                     cache.put(itemRef, join);
+                    lock.writeLock().unlock();
                     updated.add(itemRef.withValue(convert(itemRef, join)));
                 }
             }
@@ -210,6 +232,7 @@ public class DataSetJoin<A, B, OUT> implements IDataSet<OUT> {
         protected StorageChange<OUT> mapChange(StorageChange<B> change) {
             if (change.isEmpty()) return StorageChange.empty();
             // TODO add sorting for joined values
+            lock.readLock().lock();
             List<ItemRef<OUT>> updated = new ArrayList<>();
             for (final ItemRef<A> itemRef : cache.keySet()) {
                 boolean wasUpdated = false;
@@ -234,6 +257,7 @@ public class DataSetJoin<A, B, OUT> implements IDataSet<OUT> {
                 }
                 if (wasUpdated) updated.add(itemRef.withValue(convert(itemRef, join)));
             }
+            lock.readLock().unlock();
             return StorageChange.buildWithUpdated(updated);
         }
 
