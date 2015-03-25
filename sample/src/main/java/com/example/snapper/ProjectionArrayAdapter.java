@@ -9,7 +9,7 @@ import java.util.List;
 import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.projection.IProjection;
-import io.techery.snapper.util.android.MainThreadDataListenerProxy;
+import io.techery.snapper.util.android.MainThreadDataListener;
 
 public class ProjectionArrayAdapter<T> extends ArrayAdapter<T> implements IDataSet.DataListener<T> {
 
@@ -32,7 +32,7 @@ public class ProjectionArrayAdapter<T> extends ArrayAdapter<T> implements IDataS
         }
 
         this.projection = projection;
-        this.projection.addDataListener(new MainThreadDataListenerProxy<T>(this));
+        this.projection.addDataListener(new MainThreadDataListener<T>(this));
     }
 
     @Override
