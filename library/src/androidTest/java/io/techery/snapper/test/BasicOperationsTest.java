@@ -21,9 +21,9 @@ import io.techery.snapper.DataCollection;
 import io.techery.snapper.dataset.DataSetMap;
 import io.techery.snapper.dataset.IDataSet.StatusListener;
 import io.techery.snapper.model.User;
-import io.techery.snapper.util.ModelUtil;
-import io.techery.snapper.projection.ProjectionBuilder;
 import io.techery.snapper.projection.IProjection;
+import io.techery.snapper.projection.ProjectionBuilder;
+import io.techery.snapper.util.ModelUtil;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -241,6 +241,5 @@ public class BasicOperationsTest extends BaseSyncTestCase {
         dataCollection.insert(new User("10"));
         dataCollection.insert(new User("1000"));
     }
-
 
 }

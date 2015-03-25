@@ -9,12 +9,12 @@ import java.util.List;
 import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.storage.StorageChange;
 
-public class MainThreadDataListenerProxy<T> implements IDataSet.DataListener<T> {
+public class MainThreadDataListener<T> implements IDataSet.DataListener<T> {
 
     private final Handler handler;
     private final WeakReference<IDataSet.DataListener<T>> listenerRef;
 
-    public MainThreadDataListenerProxy(IDataSet.DataListener<T> listener) {
+    public MainThreadDataListener(IDataSet.DataListener<T> listener) {
         if (listener == null) {
             throw new IllegalArgumentException("Listener may not be null");
         }
