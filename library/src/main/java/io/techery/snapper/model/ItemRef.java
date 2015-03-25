@@ -11,10 +11,18 @@ public class ItemRef<T> {
         return new ItemRef<>(item.index(), item);
     }
 
+    public <U> ItemRef<U> withValue(U item) {
+        return new ItemRef<>(key, item, keyHash);
+    }
+
     public ItemRef(byte[] key, T value) {
+        this(key, value, Arrays.hashCode(key));
+    }
+
+    public ItemRef(byte[] key, T value, int keyHash) {
         this.value = value;
         this.key = key;
-        this.keyHash = Arrays.hashCode(key);
+        this.keyHash = keyHash;
     }
 
     public T getValue() {

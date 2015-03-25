@@ -87,7 +87,7 @@ public class MainActivity extends ActionBarActivity {
 
     @OnClick(R.id.filter) void onFilterClick() {
         if (itemsAdapter.getProjection().equals(sortedProjection)) {
-            itemsAdapter.setProjection(sortedProjection.projecttion()
+            itemsAdapter.setProjection(sortedProjection.projection()
                             .where(new Predicate<User>() {
                                 @Override
                                 public boolean apply(User element) {

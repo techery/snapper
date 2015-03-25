@@ -1,7 +1,9 @@
 package io.techery.snapper.test;
 
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Pair;
 
+import com.innahema.collections.query.functions.Function2;
 import com.innahema.collections.query.functions.Predicate;
 import com.innahema.collections.query.queriables.Queryable;
 
@@ -11,9 +13,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
+import java.util.List;
 
 import io.techery.snapper.BaseSyncTestCase;
 import io.techery.snapper.DataCollection;
+import io.techery.snapper.dataset.DataSetJoin;
+import io.techery.snapper.dataset.DataSetJoin.JoinBuilder;
 import io.techery.snapper.model.Company;
 import io.techery.snapper.model.User;
 import io.techery.snapper.projection.IProjection;
@@ -37,8 +42,8 @@ public class ManyCollectionsTest extends BaseSyncTestCase {
         userStorage = db.collection(User.class);
         userStorage.insert(new User("10000"));
         userStorage.insert(new User("100"));
-        userStorage.insert(new User("1"));
-        userStorage.insert(new User("10"));
+        userStorage.insert(new User("1", 20, 2));
+        userStorage.insert(new User("10", 30, 2));
         userStorage.insert(new User("1000"));
 
         companyStorage = db.collection(Company.class);
@@ -74,6 +79,27 @@ public class ManyCollectionsTest extends BaseSyncTestCase {
         Company company = Queryable.from(smallCoView.toList()).first();
         User user = Queryable.from(smallCoUserView.toList()).first();
         assertThat(company.getUsers(), hasItem(user));
+    }
+
+    @Test public void join() {
+        DataSetJoin<Company, User, Pair<Company, User>> companyUserJoin =
+                new JoinBuilder<>(companyStorage, userStorage)
+                        .setJoinFunction(new Function2<Company, User, Boolean>() {
+                            @Override public Boolean apply(Company company, User user) {
+                                return company.getId() == user.getCompanyId();
+                            }
+                        })
+                        .setMapFunction(new Function2<Company, List<User>, Pair<Company, User>>() {
+                            @Override public Pair<Company, User> apply(Company company, List<User> users) {
+                                User user = users.isEmpty() ? null : users.get(0);
+                                return new Pair<>(company, user);
+                            }
+                        }).create();
+        int companyId = 2;
+        User user = new User("1", 20, companyId);
+        Company company = new Company(companyId, "SmallCo", null);
+        assertThat(companyUserJoin.toList(), hasItem(new Pair<>(company, user)));
+        assertThat(companyUserJoin.size(), is(2));
     }
 
     @Test public void closeAll() {

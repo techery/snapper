@@ -4,6 +4,7 @@ public class User implements Indexable {
 
     private String userId;
     private int age = 100;
+    private int companyId;
 
     @Override
     public byte[] index() {
@@ -17,6 +18,12 @@ public class User implements Indexable {
     public User(String userId, int age) {
         this.userId = userId;
         this.age = age;
+    }
+
+    public User(String userId, int age, int companyId) {
+        this.userId = userId;
+        this.age = age;
+        this.companyId = companyId;
     }
 
     @Override public boolean equals(Object o) {
@@ -50,10 +57,19 @@ public class User implements Indexable {
         this.age = age;
     }
 
+    public int getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(int companyId) {
+        this.companyId = companyId;
+    }
+
     @Override public String toString() {
         return "User{" +
                 "userId='" + userId + '\'' +
                 ", age=" + age +
+                ", companyId=" + companyId +
                 '}';
     }
 }
