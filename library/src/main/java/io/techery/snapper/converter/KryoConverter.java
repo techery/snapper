@@ -6,6 +6,9 @@ import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.serializers.CompatibleFieldSerializer;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Date;
+
+import static com.esotericsoftware.kryo.serializers.DefaultSerializers.DateSerializer;
 
 public class KryoConverter<T> implements ObjectConverter<T> {
 
@@ -19,6 +22,7 @@ public class KryoConverter<T> implements ObjectConverter<T> {
         this.className = className;
         this.kryo = new Kryo();
         this.kryo.register(className);
+        this.kryo.register(Date.class, new DateSerializer());
         this.kryo.setDefaultSerializer(CompatibleFieldSerializer.class);
         //
         this.input = new Input();
