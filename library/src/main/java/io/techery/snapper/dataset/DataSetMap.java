@@ -31,6 +31,10 @@ public class DataSetMap<F, T> implements IDataSet<T>, IDataSet.DataListener<F> {
         this.originalDataSet.addDataListener(this);
     }
 
+    @Override public boolean isInitialized() {
+        return originalDataSet.isInitialized();
+    }
+
     @Override public void close() {
         throw new UnsupportedOperationException("Transmitter set couldn't be closed directly");
     }

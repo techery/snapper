@@ -31,6 +31,10 @@ public class DataCollection<T extends Indexable> extends DataSet<T> implements S
         this.storage.load(this);
     }
 
+    @Override public boolean isInitialized() {
+        return storage.isLoaded();
+    }
+
     @Override
     public void close() {
         executor.shutdown();

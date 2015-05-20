@@ -39,6 +39,7 @@ public class DataSetJoin<A, B, OUT> implements IDataSet<OUT> {
     }
 
     private void initialize() {
+        if (!isInitialized()) return;
         originalDataSet1.perform(new Runnable() {
             @Override public void run() {
                 List<OUT> items = new ArrayList<OUT>();
@@ -67,6 +68,10 @@ public class DataSetJoin<A, B, OUT> implements IDataSet<OUT> {
                 didUpdate(items, outChange);
             }
         });
+    }
+
+    @Override public boolean isInitialized() {
+        return originalDataSet1.isInitialized() && originalDataSet1.isInitialized();
     }
 
     protected void didUpdate(List<OUT> items, StorageChange<OUT> change) {

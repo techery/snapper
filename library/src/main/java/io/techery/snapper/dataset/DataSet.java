@@ -16,12 +16,14 @@ public abstract class DataSet<T> implements IDataSet<T> {
     @Override
     public void addDataListener(final DataListener<T> listener) {
         dataListeners.add(listener);
-        perform(new Runnable() {
-            @Override
-            public void run() {
-                listener.onDataUpdated(toList(), StorageChange.<T>empty());
-            }
-        });
+        if (isInitialized()) {
+            perform(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onDataUpdated(toList(), StorageChange.<T>empty());
+                }
+            });
+        }
     }
 
     @Override

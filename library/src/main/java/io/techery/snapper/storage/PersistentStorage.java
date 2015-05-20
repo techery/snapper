@@ -24,6 +24,7 @@ public class PersistentStorage<T> implements Storage<T> {
     private final Set<Future> tasks;
     private final Object lock = new Object();
     //
+    private volatile boolean isLoaded;
     private volatile boolean isClosed;
 
     public PersistentStorage(DatabaseAdapter db, ObjectConverter<T> objectConverter, ExecutorService executor) {
@@ -38,6 +39,10 @@ public class PersistentStorage<T> implements Storage<T> {
     protected void finalize() throws Throwable {
         if (!isClosed) close();
         super.finalize();
+    }
+
+    @Override public boolean isLoaded() {
+        return isLoaded;
     }
 
     @Override
@@ -119,6 +124,7 @@ public class PersistentStorage<T> implements Storage<T> {
                         synchronized (lock) {
                             itemsCache.addAll(result);
                         }
+                        isLoaded = true;
                         updateCallback.onStorageUpdate(StorageChange.buildWithAdded(result));
                     }
                 }, true);
@@ -160,6 +166,7 @@ public class PersistentStorage<T> implements Storage<T> {
     @Override
     public void close() {
         synchronized (lock) {
+            isLoaded = false;
             isClosed = true;
             itemsCache.clear();
             for (Future task : tasks) {

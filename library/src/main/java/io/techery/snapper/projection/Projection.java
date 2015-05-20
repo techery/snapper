@@ -53,23 +53,30 @@ public class Projection<T> extends DataSet<T> implements IProjection<T>, IDataSe
         initializeItems(dataSet);
     }
 
+    @Override public boolean isInitialized() {
+        IDataSet<T> parentDataSet = dataSetRef.get();
+        return parentDataSet != null && parentDataSet.isInitialized();
+    }
+
     private void initializeItems(final IDataSet<T> parentDataSet) {
         parentDataSet.perform(new Runnable() {
             @Override
             public void run() {
                 Log.d(TAG, "Initializing");
-                List<ItemRef<T>> acceptedItems = Queryable.from(parentDataSet).where(new Predicate<ItemRef<T>>() {
-                    @Override public boolean apply(ItemRef<T> element) {
-                        return Projection.this.predicate.apply(element.getValue());
-                    }
-                }).toList();
-                lock.writeLock().lock();
-                keys.addAll(acceptedItems);
-                items.addAll(acceptedItems);
-                Collections.sort(items, itemComparator);
-                lock.writeLock().unlock();
+                if (parentDataSet.isInitialized()) {
+                    List<ItemRef<T>> acceptedItems = Queryable.from(parentDataSet).where(new Predicate<ItemRef<T>>() {
+                        @Override public boolean apply(ItemRef<T> element) {
+                            return Projection.this.predicate.apply(element.getValue());
+                        }
+                    }).toList();
+                    lock.writeLock().lock();
+                    keys.addAll(acceptedItems);
+                    items.addAll(acceptedItems);
+                    Collections.sort(items, itemComparator);
+                    lock.writeLock().unlock();
 
-                didUpdateDataSet(StorageChange.buildWithAdded(items));
+                    didUpdateDataSet(StorageChange.buildWithAdded(items));
+                }
 
                 IDataSet<T> parentDataSet = Projection.this.dataSetRef.get();
                 if (parentDataSet != null) {
