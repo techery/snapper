@@ -31,4 +31,12 @@ public class ModelUtil {
             }
         }).toList();
     }
+
+    public static List<Integer> extractAges(Iterable<ItemRef<User>> source) {
+        return Queryable.from(source).map(new Converter<ItemRef<User>, Integer>() {
+            @Override public Integer convert(ItemRef<User> element) {
+                return element.getValue().getAge();
+            }
+        }).toList();
+    }
 }

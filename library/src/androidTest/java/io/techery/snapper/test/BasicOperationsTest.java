@@ -170,6 +170,10 @@ public class BasicOperationsTest extends BaseSyncTestCase {
         List<String> ids = ModelUtil.extractUserIds(filtered);
         assertThat("Filtered Projection should have 1 elements with age > 100", filtered.size(), is(1));
         assertThat(ids, hasItem(userId));
+        List<Integer> ages = ModelUtil.extractAges(filtered);
+        assertThat(ages, hasItem(400));
+        List<Integer> storageAges = ModelUtil.extractAges(dataCollection);
+        assertThat(storageAges, hasItem(400));
     }
 
     @Test

@@ -59,6 +59,8 @@ public class PersistentStorage<T> implements Storage<T> {
                         if (itemsCache.add(itemRef)) {
                             added.add(itemRef);
                         } else {
+                            itemsCache.remove(itemRef);
+                            itemsCache.add(itemRef);
                             updated.add(itemRef);
                         }
                     }
