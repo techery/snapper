@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    compile('com.snappydb:snappydb-lib:0.5.0') {
+    compile('com.snappydb:snappydb-lib:0.5.2') {
         exclude group: 'com.esotericsoftware.kryo', module: 'kryo'
     }
     compile 'com.esotericsoftware:kryo:3.0.0'
@@ -36,7 +36,7 @@ dependencies {
     //
     androidTestCompile('com.android.support.test:runner:0.2')
     androidTestCompile('com.android.support.test:rules:0.2')
-    androidTestCompile 'com.android.support:support-annotations:22.1.1'
+    androidTestCompile 'com.android.support:support-annotations:22.2.0'
     //
     androidTestCompile 'org.mockito:mockito-core:2.0.5-beta'
     androidTestCompile 'com.google.dexmaker:dexmaker:1.2'
