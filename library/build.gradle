@@ -34,7 +34,10 @@ dependencies {
     compile 'com.esotericsoftware:kryo:3.0.0'
     compile 'com.innahema:collections-query:0.2.9'
     //
-    androidTestCompile 'com.android.support.test:testing-support-lib:0.1'
+    androidTestCompile('com.android.support.test:runner:0.2')
+    androidTestCompile('com.android.support.test:rules:0.2')
+    androidTestCompile 'com.android.support:support-annotations:22.1.1'
+    //
     androidTestCompile 'org.mockito:mockito-core:2.0.5-beta'
     androidTestCompile 'com.google.dexmaker:dexmaker:1.2'
     androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.2'
