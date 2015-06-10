@@ -19,7 +19,7 @@ public class SnappyDBAdapter implements DatabaseAdapter {
 
     public SnappyDBAdapter(DB db, String prefix) {
         this.snappyDB = db;
-        this.prefix = prefix;
+        this.prefix = prefix + "-"; // unique prefix ending symbol
     }
 
     @Override
