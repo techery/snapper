@@ -126,8 +126,9 @@ public class BasicOperationsTest extends BaseSyncTestCase {
     @Test
     public void addOne() {
         insertUsers();
-        dataCollection.insert(new User("100000"));
+        assertThat("Filtered Projection should have 3 elements with length > 3", filteredProjection.size(), is(2));
 
+        dataCollection.insert(new User("100000"));
         assertThat("Filtered Projection should have 3 elements with length > 3", filteredProjection.size(), is(3));
         List<String> ids = ModelUtil.extractUserIds(filteredProjection);
         assertThat(ids, hasItem("1000"));
