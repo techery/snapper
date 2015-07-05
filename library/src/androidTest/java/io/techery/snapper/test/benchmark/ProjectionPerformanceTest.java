@@ -23,6 +23,14 @@ public class ProjectionPerformanceTest extends PerformanceTest {
         addProjections(true);
     }
 
+    @Override public void release() {
+        for (IProjection projection : projections) {
+            projection.close();
+        }
+        projections.clear();
+        super.release();
+    }
+
     private void addProjections(final boolean withInitializerListener) {
         runWithAwait(DATA_VIEW_COUNT, new Runnable() {
             @Override public void run() {
@@ -49,16 +57,10 @@ public class ProjectionPerformanceTest extends PerformanceTest {
         super.runBatchRemove();
     }
 
-    @Override protected void onBatchLoad() {
+    @Override protected void runBatchLoad() {
         projections.clear();
         addProjections(false);
+        super.runBatchLoad();
     }
 
-    @Override public void release() {
-        for (IProjection projection : projections) {
-            projection.close();
-        }
-        projections.clear();
-        super.release();
-    }
 }

@@ -4,6 +4,8 @@ import android.support.test.runner.AndroidJUnit4;
 
 import com.innahema.collections.query.functions.Predicate;
 
+import net.jodah.concurrentunit.Waiter;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,7 +19,6 @@ import io.techery.snapper.dataset.IDataSet.DataListener;
 import io.techery.snapper.model.User;
 import io.techery.snapper.projection.IProjection;
 import io.techery.snapper.storage.StorageChange;
-import io.techery.snapper.util.Waiter;
 import io.techery.snapper.util.android.MainThreadDataListener;
 import io.techery.snapper.util.android.SingleItemDataListener;
 import io.techery.snapper.util.android.SingleItemDataListener.ChangeStatus;
@@ -55,7 +56,6 @@ public class HelpersTest extends BaseSyncTestCase {
         dataCollection.insert(new User("1"));
         final boolean[] updatedOnMainThread = new boolean[1];
         final User[] user = new User[1];
-        waiter.expectResumes(1);
         dataCollection.addDataListener(new MainThreadDataListener<User>(new DataListener<User>() {
             @Override public void onDataUpdated(List<User> items, StorageChange<User> change) {
                 updatedOnMainThread[0] = Thread.currentThread().getName().contains("main");
@@ -63,7 +63,7 @@ public class HelpersTest extends BaseSyncTestCase {
                 if (!items.isEmpty()) waiter.resume();
             }
         }));
-        waiter.await();
+        waiter.await(0, 1);
         assertTrue(updatedOnMainThread[0]);
         assertThat(user[0].getUserId(), is("1"));
     }

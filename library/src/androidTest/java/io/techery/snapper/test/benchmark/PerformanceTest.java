@@ -43,7 +43,7 @@ public class PerformanceTest extends BaseAsyncTestCase {
         runWithAwait(1, new Runnable() {
             @Override public void run() {
                 userStorage = db.collection(User.class);
-                meterDataListener = new MeterDataListener("Storage");
+                meterDataListener = new MeterDataListener(DATA_LISTENER_LOG_TAG);
                 userStorage.addDataListener(meterDataListener);
                 userStorage.addDataListener(new InitializeAndResumeListener<User>(userStorage));
             }
@@ -66,7 +66,7 @@ public class PerformanceTest extends BaseAsyncTestCase {
                 }
             });
         }
-        userStorage.close();
+        db.close();
         stopSkippingOnChange();
     }
 
@@ -120,17 +120,8 @@ public class PerformanceTest extends BaseAsyncTestCase {
         //
         startSkippingOnChange();
         runBatchInsert(ModelUtil.generateUsers(BATCH_SIZE));
-        runWithAwait(1, new Runnable() {
-            @Override public void run() {
-                userStorage.addStatusListener(new IDataSet.StatusListener() {
-                    @Override public void onClosed() {
-                        userStorage.removeStatusListener(this);
-                        resume();
-                    }
-                });
-                userStorage.close();
-            }
-        });
+        db.close();
+        userStorage = db.collection(User.class);
         //
         stopSkippingOnChange();
         runBatchLoad();
@@ -141,14 +132,10 @@ public class PerformanceTest extends BaseAsyncTestCase {
     protected void runBatchLoad() {
         runWithAwait(1, new Runnable() {
             @Override public void run() {
-                userStorage = db.collection(User.class);
-                userStorage.addDataListener(new MeterDataListener(DATA_LISTENER_LOG_TAG));
-                onBatchLoad();
+                userStorage.addDataListener(meterDataListener);
             }
         });
     }
-
-    protected void onBatchLoad() {}
 
     ///////////////////////////////////////////////////////////////////////////
     // Helpers
@@ -218,7 +205,7 @@ public class PerformanceTest extends BaseAsyncTestCase {
 
         @Override public void onDataUpdated(List<T> items, StorageChange<T> change) {
             dataSet.removeDataListener(this);
-            if (!isRemoved) {
+            if (!isRemoved && items.isEmpty()) {
                 isRemoved = true;
                 resume();
             }

@@ -42,6 +42,7 @@ dependencies {
     androidTestCompile 'com.google.dexmaker:dexmaker:1.2'
     androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.2'
     androidTestCompile 'com.artfulbits:meter:1.0.1.141'
+    androidTestCompile 'net.jodah:concurrentunit:0.3.5'
     androidTestCompile 'com.jakewharton.timber:timber:2.7.1'
 }
 
