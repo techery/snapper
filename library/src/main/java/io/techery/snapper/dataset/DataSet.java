@@ -20,7 +20,9 @@ public abstract class DataSet<T> implements IDataSet<T> {
             perform(new Runnable() {
                 @Override
                 public void run() {
-                    listener.onDataUpdated(toList(), StorageChange.<T>empty());
+                    if (dataListeners.contains(listener)) {
+                        listener.onDataUpdated(toList(), StorageChange.<T>empty());
+                    }
                 }
             });
         }
