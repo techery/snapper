@@ -1,4 +1,5 @@
 language: android
+jdk: oraclejdk8
 
 env:
   global:
@@ -12,6 +13,7 @@ android:
     - build-tools-$ANDROID_BUILD_TOOLS
     - $ANDROID_TARGET
     - sys-img-$ANDROID_ABI-$ANDROID_TARGET
+    - extra-android-m2repository
 
 # emulator
 before_script:
@@ -21,7 +23,7 @@ before_script:
   - adb shell input keyevent 82 &
 
 script:
-  - gradle library:connectedCheck -PdisablePreDex
+  - ./gradlew --info clean library:connectedAndroidTest -PdisablePreDex
 
 notifications:
   slack: techery:pMdGTWT1vmmrPPRjThfhq8nG
