@@ -31,7 +31,7 @@ dependencies {
     compile('com.snappydb:snappydb-lib:0.5.2') {
         exclude group: 'com.esotericsoftware.kryo', module: 'kryo'
     }
-    compile 'com.esotericsoftware:kryo:3.0.0'
+    compile 'com.esotericsoftware:kryo:3.0.2'
     compile 'com.innahema:collections-query:0.2.9'
     //
     androidTestCompile('com.android.support.test:runner:0.3')

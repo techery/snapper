@@ -5,6 +5,8 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.serializers.CompatibleFieldSerializer;
 
+import org.objenesis.strategy.StdInstantiatorStrategy;
+
 import java.io.ByteArrayOutputStream;
 import java.util.Date;
 
@@ -24,6 +26,7 @@ public class KryoConverter<T> implements ObjectConverter<T> {
         this.kryo.register(className);
         this.kryo.register(Date.class, new DateSerializer());
         this.kryo.setDefaultSerializer(CompatibleFieldSerializer.class);
+        this.kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
         //
         this.input = new Input();
         this.output = new Output(new ByteArrayOutputStream());
