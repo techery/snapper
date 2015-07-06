@@ -3,6 +3,7 @@ package io.techery.snapper;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
+import org.junit.After;
 import org.junit.Before;
 
 import java.util.concurrent.ExecutorService;
@@ -39,6 +40,11 @@ public abstract class BaseTestCase {
                 return collectionExecutor;
             }
         }).build();
+    }
+
+    @After
+    public void clearDb() {
+        db.clear();
     }
 
     protected abstract ExecutorService provideStorageExecutor();

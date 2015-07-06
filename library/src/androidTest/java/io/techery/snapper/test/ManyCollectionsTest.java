@@ -52,8 +52,8 @@ public class ManyCollectionsTest extends BaseSyncTestCase {
     }
 
     @After public void releaseCollection() throws Exception {
-        if (!userStorage.isClosed()) userStorage.clear();
-        if (!companyStorage.isClosed()) companyStorage.clear();
+        db.collection(User.class).clear();
+        db.collection(Company.class).clear();
     }
 
     ///////////////////////////////////////////////////////////////////////////

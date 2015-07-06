@@ -1,5 +1,7 @@
 package io.techery.snapper.test;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.innahema.collections.query.functions.Predicate;
@@ -57,10 +59,14 @@ public class HelpersTest extends BaseSyncTestCase {
         final boolean[] updatedOnMainThread = new boolean[1];
         final User[] user = new User[1];
         dataCollection.addDataListener(new MainThreadDataListener<User>(new DataListener<User>() {
-            @Override public void onDataUpdated(List<User> items, StorageChange<User> change) {
+            @Override public void onDataUpdated(final List<User> items, StorageChange<User> change) {
                 updatedOnMainThread[0] = Thread.currentThread().getName().contains("main");
                 user[0] = items.isEmpty() ? null : items.get(0);
-                if (!items.isEmpty()) waiter.resume();
+                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override public void run() {
+                        if (!items.isEmpty()) waiter.resume();
+                    }
+                }, 100l);
             }
         }));
         waiter.await(0, 1);
