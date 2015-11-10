@@ -31,7 +31,7 @@ dependencies {
     compile('com.snappydb:snappydb-lib:0.5.2') {
         exclude group: 'com.esotericsoftware.kryo', module: 'kryo'
     }
-    compile 'com.esotericsoftware:kryo:3.0.2'
+    compile 'com.esotericsoftware:kryo:3.0.3'
     compile 'com.innahema:collections-query:0.2.9'
     //
     androidTestCompile('com.android.support.test:runner:0.3')
@@ -43,7 +43,7 @@ dependencies {
     androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.2'
     androidTestCompile 'com.artfulbits:meter:1.0.1.141'
     androidTestCompile 'net.jodah:concurrentunit:0.3.5'
-    androidTestCompile 'com.jakewharton.timber:timber:2.7.1'
+    androidTestCompile 'com.jakewharton.timber:timber:4.1.0'
 }
 
 // build a jar with source files
