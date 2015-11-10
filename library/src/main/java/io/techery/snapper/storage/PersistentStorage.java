@@ -16,6 +16,8 @@ import io.techery.snapper.model.ItemRef;
 
 public class PersistentStorage<T> implements Storage<T> {
 
+    private static final String TAG = PersistentStorage.class.getSimpleName();
+
     private final DatabaseAdapter db;
     private final ObjectConverter<T> objectConverter;
     private final Set<ItemRef<T>> itemsCache;
@@ -41,7 +43,8 @@ public class PersistentStorage<T> implements Storage<T> {
         super.finalize();
     }
 
-    @Override public boolean isLoaded() {
+    @Override
+    public boolean isLoaded() {
         return isLoaded;
     }
 
@@ -59,7 +62,14 @@ public class PersistentStorage<T> implements Storage<T> {
                 List<ItemRef<T>> added = new ArrayList<>();
                 List<ItemRef<T>> updated = new ArrayList<>();
                 for (ItemRef<T> itemRef : items) {
-                    db.put(itemRef.getKey(), objectConverter.toBytes(itemRef.getValue()));
+                    byte[] bytes;
+                    try {
+                        bytes = objectConverter.toBytes(itemRef.getValue());
+                    } catch (Exception e) {
+                        Log.w(TAG, "Serialization failed on put", e);
+                        continue;
+                    }
+                    db.put(itemRef.getKey(), bytes);
                     synchronized (lock) {
                         if (itemsCache.add(itemRef)) {
                             added.add(itemRef);
@@ -112,15 +122,24 @@ public class PersistentStorage<T> implements Storage<T> {
     public void load(final UpdateCallback<T> updateCallback) {
         throwIfClosed();
         submit(new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 PersistentStorage.this.db.enumerate(new DatabaseAdapter.EnumerationCallback<ItemRef<T>>() {
                     @Override
                     public ItemRef<T> onRecord(byte[] key, byte[] value) {
-                        ItemRef<T> itemRef = new ItemRef<>(key, objectConverter.fromBytes(value));
+                        T item;
+                        try {
+                            item = objectConverter.fromBytes(value);
+                        } catch (Exception e) {
+                            Log.w(TAG, "Deserialization failed on load", e);
+                            return null;
+                        }
+                        ItemRef<T> itemRef = new ItemRef<>(key, item);
                         return itemRef;
                     }
 
-                    @Override public void onComplete(List<ItemRef<T>> result) {
+                    @Override
+                    public void onComplete(List<ItemRef<T>> result) {
                         synchronized (lock) {
                             itemsCache.addAll(result);
                         }
@@ -145,7 +164,8 @@ public class PersistentStorage<T> implements Storage<T> {
                         return null;
                     }
 
-                    @Override public void onComplete(List result) {
+                    @Override
+                    public void onComplete(List result) {
                         StorageChange<T> storageChange = StorageChange.buildWithRemoved(itemsCache);
                         synchronized (lock) {
                             itemsCache.clear();

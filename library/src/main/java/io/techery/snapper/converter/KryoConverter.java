@@ -41,6 +41,7 @@ public class KryoConverter<T> implements ObjectConverter<T> {
 
     @Override
     public T fromBytes(byte[] bytes) {
+        input.close();
         input.setBuffer(bytes);
         return kryo.readObject(input, this.className);
     }

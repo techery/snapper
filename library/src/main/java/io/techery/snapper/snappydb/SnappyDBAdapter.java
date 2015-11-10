@@ -1,9 +1,9 @@
 package io.techery.snapper.snappydb;
 
 import android.util.Base64;
+import android.util.Log;
 
 import com.snappydb.DB;
-import com.snappydb.KeyIterator;
 import com.snappydb.SnappydbException;
 
 import java.io.IOException;
@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import io.techery.snapper.storage.DatabaseAdapter;
 
 public class SnappyDBAdapter implements DatabaseAdapter {
+
+    private static final String TAG = SnappyDBAdapter.class.getSimpleName();
 
     private final DB snappyDB;
     private final String prefix;
@@ -32,7 +34,7 @@ public class SnappyDBAdapter implements DatabaseAdapter {
         try {
             snappyDB.put(getFullKey(key), value);
         } catch (SnappydbException | UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Log.w(TAG, "Put failed", e);
         }
     }
 
@@ -61,29 +63,25 @@ public class SnappyDBAdapter implements DatabaseAdapter {
         try {
             snappyDB.del(getFullKey(bytes));
         } catch (SnappydbException | UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Log.w(TAG, "Deletion failed", e);
         }
     }
 
     @Override
     public <T> void enumerate(EnumerationCallback<T> enumerationCallback, boolean withValue) {
-        KeyIterator keyIterator = null;
+        ArrayList<T> results = new ArrayList<>();
         try {
-            ArrayList<T> results = new ArrayList<>();
-            for (String key : snappyDB.findKeys(this.prefix)) {
+            String[] keys = snappyDB.findKeys(this.prefix);
+            for (String key : keys) {
                 byte[] value;
                 if (withValue) value = snappyDB.getBytes(key);
                 else value = null;
                 T record = enumerationCallback.onRecord(getOriginalKey(key), value);
                 if (record != null) results.add(record);
             }
-            enumerationCallback.onComplete(results);
         } catch (SnappydbException e) {
-            e.printStackTrace();
-        } finally {
-            if (keyIterator != null) {
-                keyIterator.close();
-            }
+            Log.w(TAG, "Enumeration failed", e);
         }
+        enumerationCallback.onComplete(results);
     }
 }
