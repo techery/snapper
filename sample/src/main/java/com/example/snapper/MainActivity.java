@@ -17,8 +17,8 @@ import io.techery.snapper.DataCollection;
 import io.techery.snapper.DroidSnapper;
 import io.techery.snapper.dataset.IDataSet;
 import io.techery.snapper.model.Indexable;
-import io.techery.snapper.storage.StorageChange;
 import io.techery.snapper.projection.IProjection;
+import io.techery.snapper.storage.StorageChange;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -34,7 +34,7 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ButterKnife.inject(this);
+        ButterKnife.bind(this);
 
         dataCollection = DroidSnapper.with(this).collection(User.class);
 
