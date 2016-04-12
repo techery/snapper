@@ -1,1 +1,5 @@
-include ':sample', ':library'
+include ':snapper'
+include ':snapper-converters:kryo'
+include ':snapper-persisters:snappydb'
+include ':droidsnapper'
+include ':droidsnapper-sample'
