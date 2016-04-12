@@ -43,7 +43,7 @@ DataCollection<User> userCollection = DroidSnapper.with(context).collection(User
   _Note_: listener is called right away upon addition, it's guaranteed' that `DataCollection` is initialized first.
   
   _Caution_: listener is called from `Executor`'s thread, 
-  it's up to `DataListener` to proxy calls to another thread, e.g. [MainThreadDataListener](library/src/main/java/io/techery/snapper/util/android/MainThreadDataListener.java).
+  it's up to `DataListener` to proxy calls to another thread, e.g. [MainThreadDataListener](droidsnapper/src/main/java/io/techery/snapper/droidsnapper/helper/MainThreadDataListener.java).
 - `Projection` creation:
 
   ```java
@@ -83,7 +83,7 @@ public class User implements Indexable {
   
 ## Advanced usage
 ### DataCollection naming
-Every POJO storage is name'd with POJO's `class#getSimpleName()`, but could be labeled for uniqueness:
+Every POJO storage is named with POJO's `class#getSimpleName()`, but could be labeled for uniqueness:
 ```java
 DataCollection<User> userCollection = DroidSnapper.with(context).collection(User.class);
 DataCollection<User> friendsCollection = DroidSnapper.with(context).collection(User.class, "friends");
@@ -128,17 +128,20 @@ userIdMap.addDataListener(new IDataSet.DataListener<Integer>() {
 
 ## Under the hood
 `DroidSnapper` is a `Snapper` instance with default impl. of `Snapper`'s components, those are:
-- `StorageFactory` defines rules for creating a storage per POJO's model;
-- `ComponentFactory` provides main mechanisms:
- - `DatabaseAdapter` – links model's storage with real persister;
- - `ObjectConverter` - converts model to bytes and vice-versa to be stored by model's storage; 
- - `StorageExecutor` – `Executor` to do job for storage manipulation;
- - `CollectionExecutor` – `Executor` to do job for `DataCollection` actions;
+- `DataCollectionNamingFactory` - creates names for collections depending on it's model's class and custom label;
+- `DataCollectionFactory` creates a `DataCollection` per POJO's model, every collection involves;
+ - `StorageFactory` provides storage to put/get collection's items;
+ - `ExecutorFactory` provides `ExecutorService` to perform collection actions;
+ 
+ `Storage` impl. could differ and up to developer. 
+ Anyway `Snapper` provides `CachingStorage` with in-mem cache and forwarding calls to it's disk persister.
+  `CachingStorage` uses `ObjectConverter` to convert POJO to bytes and vice versa.
 
 It means one can easily create own no-sql storage with own components of choice.
 
-By default, `DroidSnapper` uses
-- [SnappyDB](https://github.com/nhachicha/SnappyDB) as `DatabaseAdapter`
+`DroidSnapper` uses
+- `CachingStorage` to hold collection's items in memory for best performance;
+- [SnappyDB](https://github.com/nhachicha/SnappyDB) as `StoragePersister`
 - [Kryo](https://github.com/EsotericSoftware/kryo) as `ObjectConverter`
 
 ## Dev. status
@@ -153,7 +156,7 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 dependencies {
-    compile 'com.github.techery:snapper.library:{latestVersion}'
+    compile 'com.github.techery.snapper:droidsnapper:{latestVersion}'
 }
 ```
 

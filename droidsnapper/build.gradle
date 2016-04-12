@@ -1,0 +1,70 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.github.ben-manes.versions'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    dexOptions {
+        preDexLibraries = rootProject.ext.preDexLibs
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_6
+        targetCompatibility JavaVersion.VERSION_1_6
+    }
+    packagingOptions {
+        exclude 'LICENSE'
+        exclude 'LICENSE.txt'
+    }
+}
+
+repositories {
+    jcenter()
+    maven { url "http://dl.bintray.com/kucherenko-alex/android" }
+}
+
+dependencies {
+    compile project(':snapper')
+    compile project(':snapper-converters:kryo')
+    compile(project(':snapper-persisters:snappydb')) {
+        exclude group: 'com.esotericsoftware.kryo', module: 'kryo'
+    }
+    //
+    androidTestCompile('com.android.support.test:runner:0.5')
+    androidTestCompile('com.android.support.test:rules:0.5')
+    androidTestCompile 'com.android.support:support-annotations:23.3.0'
+    //
+    androidTestCompile 'org.mockito:mockito-core:2.0.10-beta'
+    androidTestCompile 'com.google.dexmaker:dexmaker:1.2'
+    androidTestCompile 'com.google.dexmaker:dexmaker-mockito:1.2'
+    androidTestCompile 'com.artfulbits:meter:1.0.1.164'
+    androidTestCompile 'net.jodah:concurrentunit:0.4.2'
+    androidTestCompile 'com.jakewharton.timber:timber:4.1.2'
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
