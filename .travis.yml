@@ -46,4 +46,4 @@ before_script:
 ### The Job
 
 script:
-  - ./gradlew --info clean library:connectedAndroidTest sample:assembleDebug -PdisablePreDex
+  - ./gradlew --info clean droidsnapper:connectedAndroidTest droidsnapper:assembleDebug -PdisablePreDex
