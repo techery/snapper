@@ -122,6 +122,9 @@ userIdMap.addDataListener(new IDataSet.DataListener<Integer>() {
     }
 });
 ```
+#### Rx support
+`DataListener` is wrappable with Rx goodies, see [Rx Sample](droidsnapper-sample-rx/src/main/java/com/example/snapper/rx) for details.
+
 ### Resources Cleanup
 - Every collection could be closed with `DataCollection#close()`
 - All collections are closed via `Snapper#close()`
