@@ -40,7 +40,7 @@ DataCollection<User> userCollection = DroidSnapper.with(context).collection(User
   ```
   _Note_: `DataCollection` holds memory cache from it's storage for better performance;
   
-  _Note_: listener is called right away upon addition, it's guaranteed' that `DataCollection` is initialized first.
+  _Note_: listener is called right away upon addition. It's guaranteed that `DataCollection` is in costistent state (read initialized) when callback is called.
   
   _Caution_: listener is called from `Executor`'s thread, 
   it's up to `DataListener` to proxy calls to another thread, e.g. [MainThreadDataListener](droidsnapper/src/main/java/io/techery/snapper/droidsnapper/helper/MainThreadDataListener.java).
@@ -58,7 +58,7 @@ DataCollection<User> userCollection = DroidSnapper.with(context).collection(User
   ```
 `Projection` is a subset of parent `DataSet` which `DataCollection` or another `Projection` is.
 It's used for:
-    - sub-projection with condition;
+    - sub-projection with conditional filtering/sorting;
     - data observation.
 
 ### Data Model
